@@ -1187,6 +1187,7 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
   <button class="mob-tab" id="mobt-jobs-split" onclick="showPanel('jobs-split');setMobTab('jobs-split')"><i class="ti ti-list-details"></i>Jobs</button>
   <button class="mob-tab" id="mobt-calendar" onclick="showPanel('calendar');setMobTab('calendar')"><i class="ti ti-calendar-month"></i>Cal</button>
   <button class="mob-tab" id="mobt-board" onclick="showPanel('board');setMobTab('board')"><i class="ti ti-layout-kanban"></i>Board</button>
+  <button class="mob-tab" id="mobt-parts" onclick="showPanel('parts');setMobTab('parts')"><i class="ti ti-package"></i>Parts</button>
   <button class="mob-tab" id="mobt-settings" onclick="showPanel('settings');setMobTab('settings')"><i class="ti ti-settings"></i>More</button>
 </div>
 
@@ -1297,26 +1298,36 @@ let dayRules = [
 // NAV
 // ============================================================
 function showPanel(id) {
+  // Save before leaving current panel to avoid data loss on tab switch
+  if (typeof saveData === 'function' && typeof activePanel !== 'undefined' && activePanel !== id) {
+    saveData();
+  }
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mob-tab').forEach(n => n.classList.remove('active'));
   const panel = document.getElementById('panel-' + id);
-  if (!panel) return;
+  if (!panel) { console.warn('showPanel: no panel for', id); return; }
   panel.classList.add('active');
+  activePanel = id;
   // Trigger panel-specific renders
-  if (id === 'settings') setTimeout(renderSettingsExtra, 0);
-  if (id === 'archive')  setTimeout(renderArchivePanel, 0);
-  if (id === 'parts')    setTimeout(renderPartsPanel, 0);
-  // Highlight nav
+  if (id === 'dashboard')  renderDashboard();
+  if (id === 'jobs-split') renderCurrentJobsView();
+  if (id === 'board')      renderBoard();
+  if (id === 'reports')    renderReports();
+  if (id === 'parts')      { setTimeout(renderPartsPanel, 0); }
+  if (id === 'archive')    { setTimeout(renderArchivePanel, 0); }
+  if (id === 'settings')   { renderSettingsPage(); setTimeout(renderSettingsExtra, 0); setTimeout(ensureShopCode, 50); }
+  // Highlight sidebar nav
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) n.classList.add('active');
   });
-  if (id === 'jobs-split') document.getElementById('nav-jobs-split').classList.add('active');
-  activePanel = id;
-  if (id === 'dashboard') renderDashboard();
-  if (id === 'jobs-split') renderCurrentJobsView();
-  if (id === 'board') renderBoard();
-  if (id === 'reports') renderReports();
-  if (id === 'settings') renderSettingsPage();
+  if (id === 'jobs-split') {
+    const navEl = document.getElementById('nav-jobs-split');
+    if (navEl) navEl.classList.add('active');
+  }
+  // Highlight mobile tab
+  const mobTab = document.getElementById('mobt-' + id);
+  if (mobTab) mobTab.classList.add('active');
 }
 
 function setJobsView(mode) {
@@ -3733,19 +3744,36 @@ function saveData() {
       jobs: jobs,
       dayRules: dayRules,
       jobCounter: jobCounter,
+      shopProfile: typeof shopProfile !== 'undefined' ? shopProfile : {},
+      boardCols: typeof boardCols !== 'undefined' ? boardCols : [],
+      severityLevels: typeof severityLevels !== 'undefined' ? severityLevels : [],
       savedAt: new Date().toISOString()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    const serialized = JSON.stringify(payload);
+    localStorage.setItem(STORAGE_KEY, serialized);
+    // Rolling 3-slot backup keyed by time bucket (overwrites same slot repeatedly within same minute)
+    const slot = Math.floor(Date.now() / 60000) % 3;
+    localStorage.setItem(STORAGE_KEY + '_backup_' + slot, serialized);
+    localStorage.setItem(STORAGE_KEY + '_lastSave', new Date().toISOString());
+    // Update last-saved indicator
+    const lsEl = document.getElementById('last-saved-indicator');
+    if (lsEl) {
+      const t = new Date();
+      lsEl.textContent = 'Saved ' + t.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'});
+    }
     // Auto-sync to Google Drive folder after every save
     if (typeof autoSync === 'function') autoSync();
     // Cross-device sync for Netlify web app
     if (typeof pushCrossDeviceSync === 'function') pushCrossDeviceSync();
-    // Also update the silent export file for background service
-    if (typeof storeSyncInIndexedDB === 'function' && jobs.length > 0) {
-      setTimeout(silentExportSyncFile, 500);
-    }
   } catch(e) {
-    console.warn('Save failed:', e);
+    console.warn('Save failed, trying slim save:', e);
+    // Fallback: save jobs only (skip large nested objects)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({jobs, dayRules, jobCounter, savedAt: new Date().toISOString()}));
+    } catch(e2) {
+      console.error('Save completely failed:', e2);
+      if (typeof showToast === 'function') showToast('⚠ Storage full — oldest data may be lost');
+    }
   }
 }
 
@@ -3799,6 +3827,9 @@ function loadData() {
 function clearAllData() {
   if (!confirm('This will permanently delete ALL jobs and reset to default data. Are you sure?')) return;
   localStorage.removeItem(STORAGE_KEY);
+  // Clear backups too
+  for (let i = 0; i < 3; i++) localStorage.removeItem(STORAGE_KEY + '_backup_' + i);
+  localStorage.removeItem(STORAGE_KEY + '_lastSave');
   location.reload();
 }
 
@@ -4826,7 +4857,10 @@ function init() {
 
   // Show today's real date
   populateMakeList('dl-makes');
-  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  (function updateTopbarDate() {
+    const el = document.getElementById('topbar-date');
+    if (el) el.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  })();
 
   updateSidebarRules();
   renderDashboard();
