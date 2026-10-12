@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PDR Tech">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest-tech.json">
+<title>PDR Tech — Master Schedule</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f172a;--blue:#2563eb;--blue-l:#eff6ff;--blue-m:#bfdbfe;
+  --green:#16a34a;--green-l:#f0fdf4;--yellow:#ca8a04;--yellow-l:#fefce8;
+  --orange:#ea580c;--orange-l:#fff7ed;--red:#dc2626;--red-l:#fef2f2;
+  --gray0:#f8fafc;--gray1:#f1f5f9;--gray2:#e2e8f0;--gray3:#cbd5e1;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--gray0);color:var(--text);height:100vh;display:flex;overflow:hidden;font-size:14px}
+
+/* ── Sidebar ── */
+#sidebar{width:230px;min-width:230px;background:var(--navy);display:flex;flex-direction:column;overflow:hidden}
+.logo-wrap{padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-icon i{color:#fff;font-size:18px}
+.logo-text{color:#fff;font-weight:700;font-size:14px;line-height:1.2}
+.logo-text span{display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em}
+.sb-nav{padding:10px 8px;flex:1;overflow-y:auto}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);color:rgba(255,255,255,.65);cursor:pointer;font-size:13px;font-weight:500;transition:.15s;margin-bottom:2px}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.active{background:var(--blue);color:#fff}
+.sb-item i{font-size:16px;width:18px;text-align:center}
+.sb-section{color:rgba(255,255,255,.28);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;padding:10px 10px 4px}
+
+/* Shop list in sidebar */
+.shop-pill{margin:3px 8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:8px 10px;cursor:pointer;transition:.15s}
+.shop-pill:hover{background:rgba(255,255,255,.1)}
+.shop-pill.active{border-color:var(--blue);background:rgba(37,99,235,.2)}
+.shop-pill-name{font-size:12px;font-weight:600;color:#fff}
+.shop-pill-meta{font-size:10px;color:rgba(255,255,255,.45);margin-top:1px}
+.shop-pill-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.shop-remove{margin-left:auto;color:rgba(255,255,255,.25);font-size:11px;cursor:pointer;padding:2px 4px;border-radius:3px}
+.shop-remove:hover{color:rgba(255,255,255,.6);background:rgba(255,255,255,.1)}
+.no-shops{padding:12px 10px;font-size:12px;color:rgba(255,255,255,.3);text-align:center}
+
+/* ── Main ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid var(--gray2);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.content{flex:1;overflow-y:auto;padding:18px 22px}
+.panel{display:none}.panel.active{display:block}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--gray2)}.btn-outline:hover{background:var(--gray0)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* ── Badges ── */
+.sev{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase}
+.sev::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.sev.green{background:var(--green-l);color:var(--green)}.sev.yellow{background:var(--yellow-l);color:var(--yellow)}
+.sev.orange{background:var(--orange-l);color:var(--orange)}.sev.red{background:var(--red-l);color:var(--red)}
+.shop-tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;color:#fff}
+
+/* ── Stats ── */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:12px 14px}
+.stat-num{font-size:24px;font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:var(--text2);margin-top:3px}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ── Calendar ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--gray2);border:1px solid var(--gray2);border-radius:10px;overflow:hidden}
+.cal-dh{background:var(--gray0);text-align:center;padding:7px 2px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase}
+.cal-day{background:#fff;min-height:80px;padding:5px;position:relative}
+.cal-day.today{background:var(--blue-l)}
+.cal-day.other{background:var(--gray0)}
+.cal-day.blocked{background:repeating-linear-gradient(45deg,#f8fafc,#f8fafc 4px,#f1f5f9 4px,#f1f5f9 8px)}
+.cal-slot{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:9px;cursor:pointer;line-height:1.3;border-left:3px solid currentColor}
+.cal-slot.green{background:var(--green-l);color:var(--green)}
+.cal-slot.yellow{background:var(--yellow-l);color:var(--yellow)}
+.cal-slot.orange{background:var(--orange-l);color:var(--orange)}
+.cal-slot.red{background:var(--red-l);color:var(--red)}
+.cal-slot.off{background:#f1f5f9;color:var(--text3);border-left-color:var(--gray3)}
+.cal-day-num{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:3px;display:flex;align-items:center;gap:3px}
+.cal-today-num{width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.shop-dot-row{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:2px}
+
+/* ── Time-off ── */
+.off-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:600;background:#f1f5f9;color:var(--text3)}
+
+/* ── Import drop zone ── */
+.drop-zone{border:2px dashed var(--gray3);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:.2s;background:#fff}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--blue);background:var(--blue-l)}
+#import-overlay{display:none;position:fixed;inset:0;background:rgba(37,99,235,.12);border:3px dashed var(--blue);z-index:9000;align-items:center;justify-content:center;flex-direction:column;gap:10px;pointer-events:none}
+#import-overlay.active{display:flex}
+#import-overlay i{font-size:52px;color:var(--blue)}
+#import-overlay p{font-size:18px;font-weight:700;color:var(--blue)}
+
+/* ── Tables ── */
+.table-wrap{background:#fff;border:1px solid var(--gray2);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;background:var(--gray0);border-bottom:1px solid var(--gray2)}
+td{padding:9px 12px;border-bottom:1px solid var(--gray1);font-size:12px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray0);cursor:pointer}
+
+/* ── Modal ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-panel{background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-md)}
+
+/* ── Time off panel ── */
+.off-card{background:#fff;border:1px solid var(--gray2);border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.off-card-dates{font-size:13px;font-weight:600}
+.off-card-note{font-size:11px;color:var(--text2)}
+
+/* ── Toast ── */
+.sync-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--gray0);border-radius:8px;margin-bottom:8px;border:1px solid var(--gray2)}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.green{background:var(--green)}.sync-dot.yellow{background:var(--yellow)}.sync-dot.red{background:var(--red)}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--gray3);border-radius:10px}
+
+/* ══ MOBILE RESPONSIVE ══════════════════════════════════ */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+#mobile-tabbar-tech {
+  display: none;
+  background: #fff;
+  border-top: 1px solid var(--gray2);
+  padding: 6px 0 calc(var(--safe-bottom) + 6px);
+  flex-shrink: 0;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 200;
+}
+.mob-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 9px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-tab.active { color: var(--blue); }
+.mob-tab i { font-size: 20px; }
+
+@media (max-width: 768px) {
+  #sidebar { display: none !important; }
+  #mobile-tabbar-tech { display: flex; }
+
+  .topbar { padding: calc(var(--safe-top) + 8px) 14px 8px; height: auto; }
+  .topbar-title { font-size: 14px; }
+  .topbar-right .btn { display: none; }
+
+  .content { padding: 12px 12px calc(var(--safe-bottom) + 70px) !important; }
+
+  /* Stack layouts */
+  .two-col, .report-grid { grid-template-columns: 1fr !important; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+
+  /* Table scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 480px; }
+  th, td { padding: 8px 10px; font-size: 12px; }
+
+  /* Calendar cells */
+  .cal-day { min-height: 58px !important; padding: 3px !important; }
+  .cal-slot { font-size: 8px !important; padding: 1px 3px !important; }
+  .cal-day-header, .cal-dh { font-size: 9px !important; padding: 5px 2px !important; }
+
+  /* Board 2-col */
+  .board { grid-template-columns: 1fr 1fr !important; }
+
+  /* Modals full screen bottom sheet */
+  .modal, .job-modal { align-items: flex-end !important; }
+  .modal-panel, .job-panel {
+    width: 100% !important; max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 90vh !important;
+  }
+
+  /* Settings full width */
+  .settings-section { margin-bottom: 12px; }
+
+  /* Form inputs - prevent iOS zoom */
+  input, select, textarea {
+    font-size: 16px !important;
+    min-height: 40px;
+  }
+
+  /* Bigger touch targets */
+  .btn { min-height: 38px; }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  #sidebar { width: 180px !important; min-width: 180px !important; }
+}
+
+*, button, a { -webkit-tap-highlight-color: transparent; }
+
+</style>
+</head>
+<body>
+
+<div id="import-overlay">
+  <i class="ti ti-file-import"></i>
+  <p>Drop shop sync file to import</p>
+  <span style="font-size:13px;color:var(--blue);opacity:.7">Release to load shop schedule</span>
+</div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-icon"><i class="ti ti-tool"></i></div>
+    <div class="logo-text">PDR Tech Hub<span>Master Schedule</span></div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-item active" onclick="showPanel('dashboard')"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+    <div class="sb-item" onclick="showPanel('calendar')"><i class="ti ti-calendar-month"></i>Master Calendar</div>
+    <div class="sb-item" onclick="showPanel('jobs')"><i class="ti ti-list-details"></i>All Jobs</div>
+    <div class="sb-item" onclick="showPanel('timeoff')"><i class="ti ti-beach"></i>My Time Off</div>
+
+    <div class="sb-item" onclick="showPanel('settings')"><i class="ti ti-settings"></i>Sync Settings</div>
+    <div class="sb-section">Shops</div>
+    <div id="shop-list-sidebar"></div>
+    <div style="padding:6px 8px">
+      <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;color:var(--blue)" onclick="document.getElementById('sync-file-input').click()">
+        <i class="ti ti-plus"></i>Import Shop Sync
+      </button>
+    </div>
+    <input type="file" id="sync-file-input" accept=".json" style="display:none" onchange="handleSyncFileSelect(event)">
+  </div>
+</nav>
+
+<!-- Main -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title"><i class="ti ti-tool" style="color:var(--blue)"></i>PDR Tech — Master Schedule</div>
+    <div class="topbar-right">
+      <div style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px"><i class="ti ti-refresh pulse" style="font-size:12px"></i><span id="refresh-label">Auto-refresh on</span></div><span style="color:var(--gray2)">|</span>
+      <span style="font-size:12px;color:var(--text2)" id="topbar-date"></span>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('sync-file-input').click()"><i class="ti ti-upload"></i>Import Shop Sync</button>
+      <button class="btn btn-primary btn-sm" onclick="showPanel('timeoff')"><i class="ti ti-beach"></i>Add Time Off</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+      <div class="stat-grid">
+        <div class="stat-card" style="border-left:3px solid var(--blue)">
+          <div class="stat-num" style="color:var(--blue)" id="s-shops">0</div>
+          <div class="stat-label">Active Shops</div>
+          <div class="stat-sub">Synced schedules</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--green)">
+          <div class="stat-num" style="color:var(--green)" id="s-total">0</div>
+          <div class="stat-label">Total Jobs</div>
+          <div class="stat-sub">Across all shops</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--yellow)">
+          <div class="stat-num" style="color:var(--yellow)" id="s-week">0</div>
+          <div class="stat-label">This Week</div>
+          <div class="stat-sub">Scheduled jobs</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--orange)">
+          <div class="stat-num" style="color:var(--orange)" id="s-pending">0</div>
+          <div class="stat-label">Pending</div>
+          <div class="stat-sub">Not yet scheduled</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--text3)">
+          <div class="stat-num" style="color:var(--text3)" id="s-off">0</div>
+          <div class="stat-label">Days Off</div>
+          <div class="stat-sub">Upcoming blocks</div>
+        </div>
+      </div>
+
+      <!-- Two col: mini calendar + shop breakdown -->
+      <div style="display:grid;grid-template-columns:1fr 260px;gap:14px">
+        <div>
+          <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="ti ti-calendar-month" style="color:var(--blue)"></i>Master Calendar</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="btn btn-outline btn-sm" onclick="calNav(-1)"><i class="ti ti-chevron-left"></i></button>
+                <span style="font-size:12px;font-weight:600;min-width:110px;text-align:center" id="cal-title-dash"></span>
+                <button class="btn btn-outline btn-sm" onclick="calNav(1)"><i class="ti ti-chevron-right"></i></button>
+                <button class="btn btn-outline btn-sm" onclick="calNavToday()">Today</button>
+                <button class="btn btn-outline btn-sm" onclick="showPanel('calendar')">Full view <i class="ti ti-arrow-right"></i></button>
+              </div>
+            </div>
+            <div id="dash-cal"></div>
+            <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;font-size:10px">
+              <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;border-radius:2px;background:var(--gray2);display:inline-block"></span>Time off</span>
+              <span><span class="sev green" style="font-size:9px">Green</span> Light PDR</span>
+              <span><span class="sev yellow" style="font-size:9px">Yellow</span> Hood Repl</span>
+              <span><span class="sev orange" style="font-size:9px">Orange</span> Roof Refinish</span>
+              <span><span class="sev red" style="font-size:9px">Red</span> Hood+Roof Repl</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <!-- Shop breakdown -->
+          <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:13px">
+            <div style="font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:5px"><i class="ti ti-building-store" style="color:var(--blue)"></i>Shop Breakdown</div>
+            <div id="shop-breakdown"></div>
+            <div id="no-shops-msg" style="display:none;font-size:12px;color:var(--text3);text-align:center;padding:16px">
+              No shops synced yet.<br>Import a shop sync file to get started.
+            </div>
+          </div>
+
+          <!-- Sync status -->
+          <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:13px">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+              <span style="display:flex;align-items:center;gap:5px"><i class="ti ti-brand-google-drive" style="color:#34a853"></i>Shop Sync Status</span>
+              <button class="btn btn-outline btn-sm" onclick="refreshAllShops()"><i class="ti ti-refresh"></i>Refresh</button>
+            </div>
+            <div id="sync-status-list"></div>
+            <div id="no-shops-sync-msg" style="font-size:12px;color:var(--text3);text-align:center;padding:10px">No shops connected yet</div>
+          </div>
+          <!-- Upcoming time off -->
+          <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:13px;flex:1">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-beach" style="color:var(--orange)"></i>My Time Off</div>
+            <div id="upcoming-off-dash"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FULL CALENDAR -->
+    <div id="panel-calendar" class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="calNav(-1)"><i class="ti ti-chevron-left"></i></button>
+          <span style="font-size:16px;font-weight:600;min-width:140px;text-align:center" id="cal-title-full"></span>
+          <button class="btn btn-outline btn-sm" onclick="calNav(1)"><i class="ti ti-chevron-right"></i></button>
+          <button class="btn btn-outline btn-sm" onclick="calNavToday()">Today</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">Filter shop:</span>
+          <select id="cal-shop-filter" onchange="renderAll()" style="padding:5px 9px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:12px;outline:none;font-family:inherit;background:#fff">
+            <option value="">All shops</option>
+          </select>
+        </div>
+      </div>
+      <div id="full-cal"></div>
+      <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;font-size:11px">
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:12px;height:12px;border-radius:2px;background:var(--gray2);display:inline-block;border:1px solid var(--gray3)"></span>My time off</span>
+        <span><span class="sev green">Green</span> Light PDR</span>
+        <span><span class="sev yellow">Yellow</span> Hood Repl</span>
+        <span><span class="sev orange">Orange</span> Roof Refinish</span>
+        <span><span class="sev red">Red</span> Hood+Roof Repl</span>
+      </div>
+    </div>
+
+    <!-- ALL JOBS -->
+    <div id="panel-jobs" class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h2 style="font-size:17px;font-weight:700">All Jobs — All Shops</h2>
+        <div style="display:flex;gap:7px">
+          <select id="jobs-shop-filter" onchange="renderJobsTable()" style="padding:5px 9px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:12px;outline:none;font-family:inherit;background:#fff">
+            <option value="">All shops</option>
+          </select>
+          <select id="jobs-sev-filter" onchange="renderJobsTable()" style="padding:5px 9px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:12px;outline:none;font-family:inherit;background:#fff">
+            <option value="">All severities</option>
+            <option value="green">Green</option>
+            <option value="yellow">Yellow</option>
+            <option value="orange">Orange</option>
+            <option value="red">Red</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Shop</th><th>Job # &middot; Customer</th><th>Vehicle</th><th>Severity</th><th>Status</th><th>Scheduled</th></tr></thead>
+          <tbody id="jobs-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TIME OFF -->
+    <div id="panel-timeoff" class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h2 style="font-size:17px;font-weight:700">My Time Off & Vacation</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:16px">
+        <div>
+          <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:16px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:14px">Add time off</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Start date</div>
+                <input type="date" id="off-start" style="width:100%;padding:7px 10px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:13px;outline:none;font-family:inherit">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">End date</div>
+                <input type="date" id="off-end" style="width:100%;padding:7px 10px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:13px;outline:none;font-family:inherit">
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Reason (optional)</div>
+                <input type="text" id="off-note" placeholder="Vacation, personal day, etc." style="width:100%;padding:7px 10px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:13px;outline:none;font-family:inherit">
+              </div>
+              <button class="btn btn-primary" onclick="addTimeOff()" style="width:100%;justify-content:center"><i class="ti ti-plus"></i>Block these dates</button>
+            </div>
+            <div style="margin-top:14px;padding:10px;background:var(--orange-l);border-radius:8px;font-size:11px;color:var(--orange)">
+              <i class="ti ti-info-circle"></i> Time off blocks show on the master calendar and are visible when shops view your availability.
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Scheduled time off</div>
+          <div id="timeoff-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+    <!-- SETTINGS -->
+    <div id="panel-settings" class="panel">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:14px">Sync Settings</h2>
+
+      <!-- Connect shop by code -->
+      <div class="settings-section">
+        <div class="settings-section-title" style="display:flex;align-items:center;gap:8px">
+          <i class="ti ti-plug" style="color:var(--blue)"></i>Connect a Shop by Code
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Ask each shop to open their Hail Scheduler app and share their 6-letter shop code with you. Enter it here to connect.</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="new-shop-code-input" placeholder="ABC123" maxlength="6"
+            style="flex:1;padding:10px 12px;border:1px solid var(--gray2);border-radius:var(--radius);font-size:20px;font-weight:700;letter-spacing:4px;text-transform:uppercase;text-align:center;outline:none;font-family:monospace"
+            oninput="this.value=this.value.toUpperCase()">
+          <button class="btn btn-primary" onclick="connectShopByCode(document.getElementById('new-shop-code-input').value)">
+            <i class="ti ti-plug"></i>Connect
+          </button>
+        </div>
+        <div style="padding:10px;background:var(--blue-l);border-radius:8px;font-size:11px;color:var(--blue)">
+          <i class="ti ti-info-circle"></i> On the same device: the shop's data is shared instantly via the browser. On a different device: the shop exports a sync file and you import it, or use the Google Drive method.
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:16px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray1);display:flex;align-items:center;gap:8px">
+          <i class="ti ti-brand-google-drive" style="color:#34a853"></i>Google Drive Auto-Sync
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+          Each shop saves a sync file to Google Drive. Share that folder with your Google account and this program reads all files automatically every 5 minutes.
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Sync folder path (your local Google Drive copy)</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="gdrive-path" placeholder="e.g. C:/Users/YourName/Google Drive/HailSync" style="flex:1;padding:7px 10px;border:1px solid var(--gray2);border-radius:8px;font-size:12px;outline:none;font-family:monospace" oninput="saveGDrivePath()">
+            <button class="btn btn-outline btn-sm" onclick="refreshAllShops()"><i class="ti ti-refresh"></i>Check now</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--gray1)">
+          <div><div style="font-size:13px;font-weight:500">Auto-refresh every 5 minutes</div><div style="font-size:11px;color:var(--text2)">Re-reads all shop sync files periodically</div></div>
+          <div class="toggle on" id="auto-refresh-toggle" onclick="toggleAutoRefresh()"></div>
+        </div>
+        <div style="margin-top:14px;padding:12px;background:var(--blue-l);border-radius:8px;font-size:11px;color:var(--blue);line-height:1.6">
+          <strong>How it works:</strong> Each shop installs Google Drive for Desktop and saves their sync file to their Google Drive folder. They share that folder with your Google account. Google Drive syncs those folders to your laptop automatically. Paste that local path above.
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray1)">Connected Shops</div>
+        <div id="settings-shops-list"></div>
+      </div>
+    </div>
+
+<!-- Job detail modal -->
+<div class="modal" id="job-modal" onclick="closeModal(event)">
+  <div class="modal-panel" style="width:480px" onclick="event.stopPropagation()">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--gray2);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:700" id="modal-title"></div>
+        <div style="font-size:12px;color:var(--text2)" id="modal-sub"></div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="padding:16px 18px" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const STORAGE_KEY = 'pdrtech_master_v1';
+
+// Shop color palette — each shop gets a distinct color
+const SHOP_COLORS = [
+  '#2563eb','#16a34a','#dc2626','#ca8a04','#7c3aed','#0891b2','#be185d','#065f46'
+];
+
+// State
+let shops = [];      // [{id, name, phone, city, color, jobs:[], dayRules:[], importedAt}]
+let timeOff = [];    // [{id, start, end, note}]
+let calDate = new Date();
+let activePanel = 'dashboard';
+let selectedJobModal = null;
+
+// ── Persistence ──
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({shops, timeOff, savedAt: new Date().toISOString()}));
+  } catch(e) {}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    shops = d.shops || [];
+    timeOff = d.timeOff || [];
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Helpers ──
+function dStr(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function todayStr() { const t=new Date(); return dStr(t.getFullYear(),t.getMonth(),t.getDate()); }
+function formatDate(ds) { if(!ds) return '—'; const dt=new Date(ds+'T12:00:00'); return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
+function lastName(n) { if(!n) return '?'; if(n.includes(',')) return n.split(',')[0].trim(); return n.trim().split(/\s+/).pop(); }
+function shopColor(idx) { return SHOP_COLORS[idx % SHOP_COLORS.length]; }
+function getShopIdx(shopId) { return shops.findIndex(s => s.id === shopId); }
+
+function isOffDay(ds) {
+  return timeOff.some(o => ds >= o.start && ds <= o.end);
+}
+function allJobs(shopFilter) {
+  return shops
+    .filter(s => !shopFilter || s.id === shopFilter)
+    .flatMap(s => (s.jobs||[]).map(j => ({...j, _shopId:s.id, _shopName:s.name, _shopColor:s.color})));
+}
+function jobsForDate(ds, shopFilter) {
+  return allJobs(shopFilter).filter(j => j.schedDate === ds);
+}
+
+// ── Navigation ──
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  activePanel = id;
+  if(id==='dashboard') renderDashboard();
+  if(id==='calendar') renderFullCal();
+  if(id==='jobs') renderJobsTable();
+  if(id==='timeoff') renderTimeOff();
+}
+
+// ── Calendar nav ──
+function calNav(dir) {
+  calDate = new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1);
+  renderAll();
+}
+function calNavToday() { calDate = new Date(); renderAll(); }
+function renderAll() {
+  if(activePanel==='dashboard') renderDashboard();
+  if(activePanel==='calendar') renderFullCal();
+  renderSidebar();
+}
+
+// ── Build calendar HTML ──
+function buildCal(containerId, compact, shopFilter) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const year = calDate.getFullYear(), month = calDate.getMonth();
+  const titleId = containerId==='dash-cal' ? 'cal-title-dash' : 'cal-title-full';
+  const titleEl = document.getElementById(titleId);
+  if(titleEl) titleEl.textContent = MONTHS[month]+' '+year;
+
+  const first = new Date(year,month,1);
+  const startOff = first.getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const today = todayStr();
+
+  let html = '<div class="cal-grid">';
+  DAY_NAMES.forEach(d=>{ html+=`<div class="cal-dh">${d}</div>`; });
+
+  // Empty prefix cells
+  for(let i=0;i<startOff;i++){
+    const pd=new Date(year,month,1-startOff+i);
+    html+=`<div class="cal-day other"><div class="cal-day-num" style="color:var(--text3)">${pd.getDate()}</div></div>`;
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=dStr(year,month,d);
+    const isToday=ds===today;
+    const off=isOffDay(ds);
+    const dayJobs=jobsForDate(ds,shopFilter);
+    const maxSlots=compact?2:4;
+
+    let cls='cal-day';
+    if(isToday) cls+=' today';
+    if(off) cls+=' blocked';
+
+    html+=`<div class="${cls}">`;
+    html+=`<div class="cal-day-num">`;
+    if(isToday) html+=`<div class="cal-today-num">${d}</div>`;
+    else html+=`${d}`;
+    if(off) html+=`<span class="off-badge" style="margin-left:4px">Off</span>`;
+    html+=`</div>`;
+
+    if(off && compact){
+      // Just show striped
+    } else {
+      dayJobs.slice(0,maxSlots).forEach(j=>{
+        const sIdx = getShopIdx(j._shopId);
+        const color = shopColor(sIdx);
+        html+=`<div class="cal-slot ${j.severity}" onclick="openJobModal('${j.id}','${j._shopId}')" style="cursor:pointer;border-left-width:3px;border-left-color:${color}" title="${j._shopName}: ${j.customer} · ${j.id}">
+          <span style="font-weight:700;color:${color};font-size:8px;display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${j._shopName||'?'}</span>
+          <span style="font-size:8px">${j.id} &middot; ${lastName(j.customer)}</span>
+        </div>`;
+      });
+      if(dayJobs.length>maxSlots){
+        html+=`<div style="font-size:8px;color:var(--text3);padding-left:2px">+${dayJobs.length-maxSlots} more</div>`;
+      }
+    }
+    html+=`</div>`;
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+// ── Dashboard ──
+function renderDashboard(){
+  // Stats
+  const allJ=allJobs();
+  const today=todayStr();
+  const wd=new Date(); wd.setDate(wd.getDate()-wd.getDay());
+  const we=new Date(wd); we.setDate(we.getDate()+7);
+  const ws=dStr(wd.getFullYear(),wd.getMonth(),wd.getDate());
+  const wes=dStr(we.getFullYear(),we.getMonth(),we.getDate());
+  const weekJobs=allJ.filter(j=>j.schedDate>=ws&&j.schedDate<wes);
+  const upcomingOff=timeOff.filter(o=>o.end>=today).length;
+
+  document.getElementById('s-shops').textContent=shops.length;
+  document.getElementById('s-total').textContent=allJ.length;
+  document.getElementById('s-week').textContent=weekJobs.length;
+  document.getElementById('s-pending').textContent=allJ.filter(j=>j.status==='pending').length;
+  document.getElementById('s-off').textContent=upcomingOff;
+
+  buildCal('dash-cal',true,'');
+
+  // Shop breakdown
+  const bd=document.getElementById('shop-breakdown');
+  const noMsg=document.getElementById('no-shops-msg');
+  if(!shops.length){bd.innerHTML='';noMsg.style.display='block';}
+  else{
+    noMsg.style.display='none';
+    bd.innerHTML=shops.map((s,i)=>{
+      const sj=s.jobs||[];
+      const color=shopColor(i);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray1);cursor:pointer" onclick="filterCalByShop('${s.id}')">
+        <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+          <div style="font-size:10px;color:var(--text2)">${s.city||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:13px;font-weight:700;color:${color}">${sj.length}</div>
+          <div style="font-size:10px;color:var(--text2)">jobs</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Upcoming off
+  const uod=document.getElementById('upcoming-off-dash');
+  const future=timeOff.filter(o=>o.end>=today).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,4);
+  uod.innerHTML=future.length
+    ? future.map(o=>`<div style="padding:6px 0;border-bottom:1px solid var(--gray1);font-size:12px">
+        <div style="font-weight:600">${formatDate(o.start)}${o.start!==o.end?' – '+formatDate(o.end):''}</div>
+        <div style="font-size:11px;color:var(--text2)">${o.note||'Time off'}</div>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--text3)">No upcoming time off</div>';
+}
+
+// ── Full calendar ──
+function renderFullCal(){
+  // Populate filter
+  const sel=document.getElementById('cal-shop-filter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All shops</option>'+shops.map(s=>`<option value="${s.id}"${s.id===cur?' selected':''}>${s.name}</option>`).join('');
+  buildCal('full-cal',false,sel.value);
+}
+function filterCalByShop(id){
+  showPanel('calendar');
+  document.getElementById('cal-shop-filter').value=id;
+  renderFullCal();
+}
+
+// ── Jobs table ──
+function renderJobsTable(){
+  const shopF=document.getElementById('jobs-shop-filter').value;
+  const sevF=document.getElementById('jobs-sev-filter').value;
+  // Populate shop filter
+  const sel=document.getElementById('jobs-shop-filter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All shops</option>'+shops.map(s=>`<option value="${s.id}"${s.id===cur?' selected':''}>${s.name}</option>`).join('');
+
+  let list=allJobs(shopF);
+  if(sevF) list=list.filter(j=>j.severity===sevF);
+  list.sort((a,b)=>(a.schedDate||'').localeCompare(b.schedDate||''));
+
+  const tbody=document.getElementById('jobs-tbody');
+  tbody.innerHTML='';
+  if(!list.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--text3)">No jobs found</td></tr>';return;}
+  list.forEach(j=>{
+    const sIdx=getShopIdx(j._shopId);
+    const color=shopColor(sIdx);
+    const tr=document.createElement('tr');
+    tr.style.borderLeft=`4px solid ${color}`;
+    tr.innerHTML=`<td style="font-weight:700;color:${color}">${j._shopName||'?'}</td>
+      <td style="font-weight:600">${j.id} &middot; ${j.customer}</td>
+      <td style="font-size:11px">${j.vehicle||''}</td>
+      <td><span class="sev ${j.severity}">${j.severity[0].toUpperCase()+j.severity.slice(1)}</span></td>
+      <td style="font-size:11px">${j.status}</td>
+      <td style="font-size:11px;color:var(--blue)">${j.schedDate?formatDate(j.schedDate):'—'}</td>`;
+    tr.onclick=()=>openJobModal(j.id,j._shopId);
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Time Off ──
+function addTimeOff(){
+  const start=document.getElementById('off-start').value;
+  const end=document.getElementById('off-end').value||start;
+  const note=document.getElementById('off-note').value.trim();
+  if(!start){showToast('Please pick a start date');return;}
+  if(end<start){showToast('End date must be on or after start date');return;}
+  timeOff.push({id:'off_'+Date.now(),start,end,note});
+  timeOff.sort((a,b)=>a.start.localeCompare(b.start));
+  document.getElementById('off-start').value='';
+  document.getElementById('off-end').value='';
+  document.getElementById('off-note').value='';
+  save();
+  showToast('Time off blocked: '+formatDate(start)+(start!==end?' – '+formatDate(end):''));
+  renderTimeOff();
+  renderAll();
+}
+function deleteOff(id){
+  timeOff=timeOff.filter(o=>o.id!==id);
+  save();
+  renderTimeOff();
+  renderAll();
+  showToast('Time off removed');
+}
+function renderTimeOff(){
+  const today=todayStr();
+  const el=document.getElementById('timeoff-list');
+  const sorted=timeOff.sort((a,b)=>a.start.localeCompare(b.start));
+  if(!sorted.length){el.innerHTML='<div style="font-size:13px;color:var(--text3)">No time off scheduled</div>';return;}
+  el.innerHTML=sorted.map(o=>{
+    const past=o.end<today;
+    return `<div class="off-card" style="opacity:${past?.55:1}">
+      <i class="ti ti-beach" style="font-size:20px;color:${past?'var(--text3)':'var(--orange)'}"></i>
+      <div style="flex:1">
+        <div class="off-card-dates">${formatDate(o.start)}${o.start!==o.end?' → '+formatDate(o.end):''}</div>
+        <div class="off-card-note">${o.note||'Time off'}${past?' · <em>past</em>':''}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="color:var(--red)" onclick="deleteOff('${o.id}')"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }).join('');
+}
+
+// ── Sidebar ──
+function renderSidebar(){
+  const el=document.getElementById('shop-list-sidebar');
+  if(!shops.length){
+    el.innerHTML='<div class="no-shops">No shops yet — import a sync file</div>';
+    return;
+  }
+  el.innerHTML=shops.map((s,i)=>`
+    <div class="shop-pill" onclick="filterCalByShop('${s.id}')">
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="shop-pill-dot" style="background:${shopColor(i)}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="shop-pill-name">${s.name}</div>
+          <div class="shop-pill-meta">${(s.jobs||[]).length} jobs · synced ${s.importedAt?new Date(s.importedAt).toLocaleDateString():''}</div>
+        </div>
+        <span class="shop-remove" onclick="event.stopPropagation();removeShop('${s.id}')" title="Remove shop">✕</span>
+      </div>
+    </div>`).join('');
+}
+function removeShop(id){
+  if(!confirm('Remove this shop and all its jobs from your master view?')) return;
+  shops=shops.filter(s=>s.id!==id);
+  save();
+  renderSidebar();
+  renderAll();
+  showToast('Shop removed');
+}
+
+// ── Import shop sync file ──
+function handleSyncFileSelect(e){
+  const file=e.target.files[0];
+  if(file) loadSyncFile(file);
+  e.target.value='';
+}
+function loadSyncFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data._type!=='hail_shop_export') throw new Error('Not a valid shop sync file');
+      importShop(data);
+    } catch(err){
+      showToast('Error: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+function importShop(data){
+  const shopId=data.shopId||(data.shopId='Unknown Shop');
+  const existing=shops.findIndex(s=>s.name===shopId);
+  const color=existing>=0 ? shopColor(existing) : shopColor(shops.length);
+  const shopEntry={
+    id: shopId.replace(/[^a-z0-9]/gi,'_').toLowerCase(),
+    name: shopId,
+    phone: data.shopPhone||'',
+    city: data.shopCity||'',
+    color,
+    jobs: data.jobs||[],
+    dayRules: data.dayRules||[],
+    importedAt: new Date().toISOString()
+  };
+  if(existing>=0) shops[existing]=shopEntry;
+  else shops.push(shopEntry);
+  save();
+  renderSidebar();
+  renderAll();
+  showToast('✓ '+shopId+' synced — '+(data.jobs||[]).length+' jobs loaded');
+}
+
+// ── Job modal ──
+function openJobModal(jobId, shopId){
+  const shop=shops.find(s=>s.id===shopId);
+  if(!shop) return;
+  const job=(shop.jobs||[]).find(j=>j.id===jobId);
+  if(!job) return;
+  const sIdx=getShopIdx(shopId);
+  const color=shopColor(sIdx);
+  document.getElementById('modal-title').textContent=job.id+' · '+job.customer;
+  document.getElementById('modal-sub').innerHTML=
+    `${job.vehicle||''} &nbsp;|&nbsp; <span style="color:${color};font-weight:600">${shop.name}</span>`;
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+      <div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px">Severity</div><span class="sev ${job.severity}">${job.severity[0].toUpperCase()+job.severity.slice(1)}</span></div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px">Status</div>${job.status||'—'}</div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px">Scheduled</div>${job.schedDate?formatDate(job.schedDate):'Not scheduled'}</div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px">Claim #</div>${job.claim||'—'}</div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px">VIN</div><span style="font-size:11px;font-family:monospace">${job.vin||'—'}</span></div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px">Shop</div><span style="color:${color};font-weight:600">${shop.name}</span></div>
+    </div>
+    ${job.notes?`<div style="margin-top:10px;padding:8px 10px;background:var(--gray0);border-radius:6px;font-size:12px;color:var(--text2)">${job.notes}</div>`:''}`;
+  document.getElementById('job-modal').classList.add('open');
+}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('job-modal')) return;
+  document.getElementById('job-modal').classList.remove('open');
+}
+
+// ── Global file drop (JSON sync files) ──
+let _dropCount=0;
+window.addEventListener('dragenter',e=>{
+  const hasFiles=e.dataTransfer&&e.dataTransfer.types&&Array.from(e.dataTransfer.types).includes('Files');
+  if(!hasFiles) return;
+  _dropCount++;
+  document.getElementById('import-overlay').classList.add('active');
+});
+window.addEventListener('dragleave',e=>{
+  if(e.relatedTarget===null||e.relatedTarget===document.documentElement){
+    _dropCount=0;
+    document.getElementById('import-overlay').classList.remove('active');
+  }
+});
+window.addEventListener('dragover',e=>{ if(e.dataTransfer&&e.dataTransfer.types&&Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault(); });
+window.addEventListener('drop',e=>{
+  _dropCount=0;
+  document.getElementById('import-overlay').classList.remove('active');
+  if(!e.dataTransfer||!e.dataTransfer.files||!e.dataTransfer.files.length) return;
+  const file=e.dataTransfer.files[0];
+  if(file&&file.name.endsWith('.json')){
+    e.preventDefault();
+    loadSyncFile(file);
+  }
+});
+
+// ── Toast ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── Init ──
+
+// ============================================================
+// AUTO-REFRESH & GOOGLE DRIVE SYNC
+// ============================================================
+let autoRefreshEnabled = true;
+let autoRefreshInterval = null;
+let gDrivePath = '';
+
+function setupAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  const lbl = document.getElementById('refresh-label');
+  if (!autoRefreshEnabled) { if(lbl) lbl.textContent='Auto-refresh off'; return; }
+  let secs = 300;
+  autoRefreshInterval = setInterval(() => {
+    secs--;
+    if (secs <= 0) { secs = 300; if(typeof renderSyncStatusList==='function') renderSyncStatusList(); }
+    if (lbl) { const m=Math.floor(secs/60), s=secs%60; lbl.textContent='Refresh in '+(m>0?m+'m ':'')+s+'s'; }
+  }, 1000);
+}
+
+function toggleAutoRefresh() {
+  const tog = document.getElementById('auto-refresh-toggle');
+  autoRefreshEnabled = !tog.classList.contains('on');
+  tog.classList.toggle('on', autoRefreshEnabled);
+  save(); setupAutoRefresh();
+  showToast(autoRefreshEnabled?'Auto-refresh enabled (every 5 min)':'Auto-refresh paused');
+}
+
+function saveGDrivePath() {
+  gDrivePath = (document.getElementById('gdrive-path')||{}).value || '';
+  save();
+}
+
+function refreshAllShops() {
+  if(typeof renderSyncStatusList==='function') renderSyncStatusList();
+  const n = pollShopUpdates(); if(!n) showToast('Drop updated sync files here, or connect shops by code in Settings');
+}
+
+function renderSyncStatusList() {
+  const el = document.getElementById('sync-status-list');
+  const noMsg = document.getElementById('no-shops-sync-msg');
+  if (!el) return;
+  if (!shops.length) { el.innerHTML=''; if(noMsg) noMsg.style.display='block'; return; }
+  if(noMsg) noMsg.style.display='none';
+  el.innerHTML = shops.map((s,i) => {
+    const mins = s.importedAt ? Math.round((Date.now()-new Date(s.importedAt))/60000) : 9999;
+    const fresh = mins<30, dotCls = fresh?'green':mins<120?'yellow':'red';
+    const col = shopColor(i);
+    const scheduledCount = (s.jobs||[]).filter(j=>j.schedDate).length;
+    return '<div class="sync-row" style="border-left:4px solid ' + col + ';padding-left:10px">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:13px;font-weight:700;color:' + col + '">' + s.name + '</div>' +
+        '<div style="font-size:10px;color:var(--text2)">Synced ' + timeAgo(s.importedAt) + ' &middot; ' + (s.jobs||[]).length + ' jobs &middot; ' + scheduledCount + ' scheduled</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
+        '<div class="sync-dot ' + dotCls + '"></div>' +
+        '<span style="font-size:10px;background:' + (fresh?'var(--green-l)':'var(--yellow-l)') + ';color:' + (fresh?'var(--green)':'var(--yellow)') + ';padding:2px 7px;border-radius:10px;font-weight:600">' + (fresh?'Live':'Stale') + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderSettings() {
+  const pathEl = document.getElementById('gdrive-path');
+  if (pathEl) pathEl.value = gDrivePath;
+  const tog = document.getElementById('auto-refresh-toggle');
+  if (tog) tog.classList.toggle('on', autoRefreshEnabled);
+  const sl = document.getElementById('settings-shops-list');
+  if (!sl) return;
+  if (!shops.length) { sl.innerHTML='<div style="font-size:12px;color:var(--text3)">No shops connected</div>'; return; }
+  sl.innerHTML = shops.map((s,i) =>
+    '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray1)">' +
+      '<div style="width:10px;height:10px;border-radius:50%;background:' + shopColor(i) + ';flex-shrink:0"></div>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + s.name + '</div>' +
+      '<div style="font-size:11px;color:var(--text2)">' + (s.jobs||[]).length + ' jobs &middot; last sync ' + timeAgo(s.importedAt) + '</div></div>' +
+      '<button class="btn btn-outline btn-sm" style="color:var(--red)" onclick="removeShop('' + s.id + '')"><i class="ti ti-trash"></i></button>' +
+    '</div>'
+  ).join('');
+}
+
+
+// ============================================================
+// SHOP CODE CONNECTION — reads shop data from localStorage
+// Shop writes: localStorage['hailsync_data_CODE']
+// Tech reads:  same key, same browser (Netlify same-origin)
+// ============================================================
+
+function connectShopByCode(code) {
+  code = (code || '').trim().toUpperCase();
+  if (code.length !== 6) { showToast('Shop code must be 6 characters'); return; }
+  if (shops.find(s => s.id === code)) { showToast('Shop ' + code + ' already connected'); return; }
+
+  // Try to read their data immediately from localStorage
+  const loaded = loadShopData(code);
+
+  if (!loaded) {
+    // No data yet — add placeholder and wait for next sync
+    const name = 'Shop ' + code;
+    shops.push({ id: code, name, phone: '', city: '', color: shopColor(shops.length),
+                 jobs: [], dayRules: [], importedAt: null });
+    save();
+    renderSidebar();
+    renderDashboard();
+    showToast(name + ' connected — waiting for first sync from shop');
+  } else {
+    showToast(shops.find(s => s.id === code)?.name + ' connected — ' +
+              (shops.find(s => s.id === code)?.jobs?.length || 0) + ' jobs loaded');
+  }
+
+  // Clear input
+  const inp = document.getElementById('new-shop-code-input');
+  if (inp) inp.value = '';
+  renderSettings();
+}
+
+function loadShopData(code) {
+  // Shop program writes to this key every time data changes
+  const raw = localStorage.getItem('hailsync_data_' + code);
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    if (data._type !== 'hail_shop_export') return false;
+
+    const existing = shops.findIndex(s => s.id === code);
+    const entry = {
+      id:         code,
+      name:       data.shopId   || ('Shop ' + code),
+      phone:      data.shopPhone || '',
+      city:       data.shopCity  || '',
+      color:      existing >= 0 ? shops[existing].color : shopColor(shops.length),
+      jobs:       data.jobs      || [],
+      dayRules:   data.dayRules  || [],
+      importedAt: data.exportedAt || new Date().toISOString(),
+    };
+
+    if (existing >= 0) {
+      shops[existing] = entry;
+    } else {
+      shops.push(entry);
+    }
+    save();
+    return true;
+  } catch(e) { return false; }
+}
+
+function pollShopUpdates() {
+  let updated = 0;
+  shops.forEach(s => {
+    const tsRaw = localStorage.getItem('hailsync_data_' + s.id + '_t');
+    const remoteTs = tsRaw ? parseInt(tsRaw) : 0;
+    const localTs  = s.importedAt ? new Date(s.importedAt).getTime() : 0;
+    if (remoteTs > localTs) {
+      if (loadShopData(s.id)) updated++;
+    }
+  });
+  if (updated > 0) {
+    renderSidebar();
+    renderDashboard();
+    if (activePanel === 'calendar') renderFullCal();
+    if (activePanel === 'jobs')     renderJobsTable();
+  }
+  return updated;
+}
+
+function init(){
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  load();
+  // Load latest data for all known shops on startup
+  shops.forEach(s => loadShopData(s.id));
+  renderSidebar();
+  renderDashboard();
+  setInterval(save,30000);
+  // Poll for shop updates every 60 seconds
+  setInterval(pollShopUpdates, 60 * 1000);
+}
+init();
+</script>
+</body>
+</html>
