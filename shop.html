@@ -433,13 +433,13 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
   cursor:pointer;border:none;
   transition:all .15s;white-space:nowrap;flex-shrink:0;
 }
-.parts-status-pill.ordered   { background:#f0fdf4;color:#16a34a;border:1.5px solid #16a34a; }
+.parts-status-pill.ordered     { background:#f0fdf4;color:#16a34a;border:1.5px solid #16a34a; }
 .parts-status-pill.not-ordered { background:#fef2f2;color:#dc2626;border:1.5px solid #dc2626; }
-.parts-status-pill.partial   { background:#fff7ed;color:#ea580c;border:1.5px solid #ea580c; }
+.parts-status-pill.partial     { background:#fff7ed;color:#ea580c;border:1.5px solid #ea580c; }
 .parts-customer-body { padding:0 16px 14px; }
 .parts-line-table { width:100%;border-collapse:collapse;font-size:12px;margin-top:8px; }
 .parts-line-table th { padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;background:var(--gray1);border-bottom:1px solid var(--gray2); }
-.parts-line-table td { padding:8px 10px;border-bottom:1px solid var(--gray2); }
+.parts-line-table td { padding:8px 10px;border-bottom:1px solid var(--gray2);vertical-align:middle; }
 .parts-line-table tr:last-child td { border-bottom:none; }
 .parts-status-select { font-size:11px;font-weight:600;border:1px solid var(--gray2);border-radius:5px;padding:3px 7px;background:#fff;cursor:pointer;color:inherit; }
 .parts-expand-arrow { transition:transform .2s;flex-shrink:0;font-size:14px;color:var(--text3); }
@@ -451,6 +451,25 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
 .parts-summary-stat { display:flex;flex-direction:column;align-items:center;gap:2px; }
 .parts-summary-stat .num { font-size:22px;font-weight:900;line-height:1; }
 .parts-summary-stat .lbl { font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.06em; }
+/* Parts quick-action buttons */
+.parts-quick-btn { display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;border:none;cursor:pointer;transition:.1s;white-space:nowrap; }
+.parts-quick-btn.recv  { background:#dcfce7;color:#16a34a; }
+.parts-quick-btn.recv:hover  { background:#bbf7d0; }
+.parts-quick-btn.bo    { background:#fef3c7;color:#b45309; }
+.parts-quick-btn.bo:hover    { background:#fde68a; }
+.parts-quick-btn.note  { background:#f1f5f9;color:#475569; }
+.parts-quick-btn.note:hover  { background:#e2e8f0; }
+/* B/O pill */
+.bo-pill { display:inline-flex;align-items:center;gap:3px;background:#fff7ed;color:#b45309;border:1.5px solid #f59e0b;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700; }
+/* Received pill */
+.recv-pill { display:inline-flex;align-items:center;gap:3px;background:#f0fdf4;color:#16a34a;border:1.5px solid #16a34a;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700; }
+/* Invoice scan modal */
+.inv-scan-drop { border:2px dashed var(--gray2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:.15s;background:#fafbfc; }
+.inv-scan-drop:hover,.inv-scan-drop.drag { border-color:var(--blue);background:var(--blue-l); }
+.inv-result-row { display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--gray0);margin-bottom:6px; }
+.inv-result-row.matched { background:#f0fdf4; }
+.inv-result-row.bo      { background:#fff7ed; }
+.inv-result-row input[type=checkbox] { width:16px;height:16px;cursor:pointer;flex-shrink:0; }
 
 </style>
 </head>
@@ -889,27 +908,30 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
       <div class="parts-summary-bar" id="parts-summary-bar">
         <div style="flex:1">
           <div style="font-size:16px;font-weight:800;margin-bottom:1px">Parts Tracker</div>
-          <div style="font-size:11px;opacity:.7">All customers · part-level ordering status</div>
+          <div style="font-size:11px;opacity:.7">All customers · order & delivery status</div>
         </div>
-        <div class="parts-summary-stat"><span class="num" id="ps-total">0</span><span class="lbl">Customers</span></div>
-        <div class="parts-summary-stat"><span class="num" id="ps-ordered" style="color:#4ade80">0</span><span class="lbl">All Ordered</span></div>
-        <div class="parts-summary-stat"><span class="num" id="ps-partial" style="color:#fb923c">0</span><span class="lbl">Partial</span></div>
-        <div class="parts-summary-stat"><span class="num" id="ps-none" style="color:#f87171">0</span><span class="lbl">Not Started</span></div>
-        <button class="btn btn-sm" onclick="markAllOrdered()" style="background:rgba(255,255,255,.15);color:#fff;margin-left:8px;border:1px solid rgba(255,255,255,.25)">
-          <i class="ti ti-checks"></i>Mark All Ordered
-        </button>
+        <div class="parts-summary-stat"><span class="num" id="ps-total">0</span><span class="lbl">Jobs</span></div>
+        <div class="parts-summary-stat"><span class="num" id="ps-received" style="color:#4ade80">0</span><span class="lbl">Received</span></div>
+        <div class="parts-summary-stat"><span class="num" id="ps-bo" style="color:#fb923c">0</span><span class="lbl">Backordered</span></div>
+        <div class="parts-summary-stat"><span class="num" id="ps-ordered" style="color:#60a5fa">0</span><span class="lbl">Ordered</span></div>
+        <div class="parts-summary-stat"><span class="num" id="ps-none" style="color:#f87171">0</span><span class="lbl">Pending</span></div>
       </div>
 
-      <!-- Filter bar -->
+      <!-- Action / Filter bar -->
       <div class="parts-filter-bar">
-        <span style="font-size:12px;font-weight:600;color:var(--text2)">Filter:</span>
-        <button class="parts-filter-btn active" id="pf-all"      onclick="setPFilter('all',this)">All</button>
-        <button class="parts-filter-btn"         id="pf-pending"  onclick="setPFilter('pending',this)">Not Ordered</button>
-        <button class="parts-filter-btn"         id="pf-partial"  onclick="setPFilter('partial',this)">Partial</button>
-        <button class="parts-filter-btn"         id="pf-ordered"  onclick="setPFilter('ordered',this)">All Ordered</button>
+        <span style="font-size:12px;font-weight:600;color:var(--text2)">Show:</span>
+        <button class="parts-filter-btn active" id="pf-all"       onclick="setPFilter('all',this)">All Jobs</button>
+        <button class="parts-filter-btn"         id="pf-pending"   onclick="setPFilter('pending',this)">Pending</button>
+        <button class="parts-filter-btn"         id="pf-bo"        onclick="setPFilter('bo',this)">B/O</button>
+        <button class="parts-filter-btn"         id="pf-partial"   onclick="setPFilter('partial',this)">Partial</button>
+        <button class="parts-filter-btn"         id="pf-ordered"   onclick="setPFilter('ordered',this)">Ordered</button>
+        <button class="parts-filter-btn"         id="pf-received"  onclick="setPFilter('received',this)">Received ✓</button>
         <div style="flex:1"></div>
-        <button class="btn btn-outline btn-sm" onclick="showPanel('import')">
-          <i class="ti ti-file-upload"></i>Import PDF
+        <button class="btn btn-outline btn-sm" style="border-color:#f59e0b;color:#b45309" onclick="openInvScanModal(null)">
+          <i class="ti ti-scan"></i> Scan Invoice
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="addManualPartPrompt()">
+          <i class="ti ti-plus"></i> Add Part
         </button>
       </div>
 
@@ -1109,6 +1131,74 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
       <button class="btn btn-outline" onclick="closePMModal()">Close</button>
       <div style="flex:1"></div>
       <span style="font-size:11px;color:var(--text3)" id="pm-save-status"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ INVOICE SCAN MODAL ════ -->
+<div class="job-modal" id="inv-scan-modal" onclick="closeInvScanModal(event)">
+  <div class="job-panel" onclick="event.stopPropagation()" style="width:860px;max-width:96vw;max-height:92vh">
+    <div class="job-panel-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:34px;height:34px;border-radius:8px;background:#f59e0b;display:flex;align-items:center;justify-content:center">
+          <i class="ti ti-scan" style="color:#fff;font-size:17px"></i>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)" id="inv-scan-title">Scan Supplier Invoice</div>
+          <div style="font-size:11px;color:var(--text2)" id="inv-scan-sub">Match invoice PDF to job parts — mark received or backordered</div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="closeInvScanModal()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div style="padding:14px 18px;border-bottom:1px solid var(--gray2)">
+      <!-- Job selector -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <label style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap">Job:</label>
+        <select id="inv-job-select" style="flex:1;padding:6px 10px;border:1px solid var(--gray2);border-radius:7px;font-size:13px;font-weight:600" onchange="invJobChanged()">
+          <option value="">-- Select a job --</option>
+        </select>
+        <div id="inv-job-badge" style="font-size:11px;color:var(--text3)"></div>
+      </div>
+      <!-- Drop zone -->
+      <div class="inv-scan-drop" id="inv-drop-zone"
+        onclick="document.getElementById('inv-pdf-input').click()"
+        ondragover="invDzOver(event)" ondrop="invDzDrop(event)" ondragleave="invDzLeave()">
+        <i class="ti ti-file-invoice" style="font-size:28px;color:#f59e0b;display:block;margin-bottom:6px"></i>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">Drop supplier invoice PDF here</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">OEM dealers · LKQ · Keystone · NTP · Click to browse</div>
+      </div>
+      <input type="file" id="inv-pdf-input" accept=".pdf" style="display:none" onchange="invHandlePDF(event)">
+      <!-- Invoice stats bar -->
+      <div id="inv-stats-bar" style="display:none;margin-top:10px;gap:14px;align-items:center;padding:8px 12px;background:var(--gray0);border-radius:8px;font-size:12px">
+        <i class="ti ti-packages" style="color:var(--blue)"></i>
+        <span id="inv-stat-found">—</span>
+        <span id="inv-stat-matched" style="color:#16a34a">—</span>
+        <span id="inv-stat-unmatched" style="color:var(--text3)">—</span>
+        <div style="flex:1"></div>
+        <button class="btn btn-sm" style="background:#dcfce7;color:#15803d;border:none" onclick="invReceiveAll()">
+          <i class="ti ti-checks"></i> Mark all received
+        </button>
+        <button class="btn btn-sm" style="background:#fef3c7;color:#b45309;border:none" onclick="invBOAll()">
+          <i class="ti ti-clock-exclamation"></i> Mark all B/O
+        </button>
+      </div>
+    </div>
+
+    <!-- Results list -->
+    <div style="overflow-y:auto;flex:1;padding:14px 18px" id="inv-result-body">
+      <div style="text-align:center;padding:40px;color:var(--text3)">
+        <i class="ti ti-file-scan" style="font-size:40px;display:block;margin-bottom:10px;opacity:.4"></i>
+        <div style="font-size:13px;font-weight:600">Select a job and scan an invoice to get started</div>
+        <div style="font-size:11px;margin-top:4px">Parts from the job will be matched against the invoice automatically</div>
+      </div>
+    </div>
+
+    <div style="padding:12px 18px;border-top:1px solid var(--gray2);display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="invSaveResults()"><i class="ti ti-device-floppy"></i>Save Changes</button>
+      <button class="btn btn-outline" onclick="closeInvScanModal()">Cancel</button>
+      <div style="flex:1"></div>
+      <span style="font-size:11px;color:var(--text3)" id="inv-save-status"></span>
     </div>
   </div>
 </div>
@@ -3563,33 +3653,36 @@ function renderPartsPanel() {
   const listEl = document.getElementById('parts-customer-list');
   if (!listEl) return;
 
-  const today = new Date().toISOString().slice(0, 10);
-
-  // All active (non-archived, non-estimate) jobs that have a scheduled date
+  // All active (non-archived, non-estimate) jobs
   let allJobs = jobs.filter(j => !j.isArchived && !j.isEstimate)
     .sort((a, b) => (a.schedDate || 'zzz').localeCompare(b.schedDate || 'zzz'));
 
-  // Update summary stats
-  let countOrdered = 0, countPartial = 0, countNone = 0;
+  // Compute per-part stats across all jobs
+  let countReceived = 0, countBO = 0, countOrdered = 0, countNone = 0;
   allJobs.forEach(j => {
-    const s = getJobPartsStatus(j);
-    if (s === 'ordered')     countOrdered++;
-    else if (s === 'partial') countPartial++;
-    else                      countNone++;
+    const parts = j.parts || [];
+    if (!parts.length) { countNone++; return; }
+    parts.forEach(p => {
+      if (p.status === 'received')  countReceived++;
+      else if (p.status === 'backorder') countBO++;
+      else if (p.status === 'ordered')   countOrdered++;
+      else countNone++;
+    });
   });
-  const psTotal   = document.getElementById('ps-total');
-  const psOrdered = document.getElementById('ps-ordered');
-  const psPartial = document.getElementById('ps-partial');
-  const psNone    = document.getElementById('ps-none');
-  if (psTotal)   psTotal.textContent   = allJobs.length;
-  if (psOrdered) psOrdered.textContent = countOrdered;
-  if (psPartial) psPartial.textContent = countPartial;
-  if (psNone)    psNone.textContent    = countNone;
+  const safe = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  safe('ps-total',    allJobs.length);
+  safe('ps-received', countReceived);
+  safe('ps-bo',       countBO);
+  safe('ps-ordered',  countOrdered);
+  safe('ps-none',     countNone);
 
   // Apply filter
-  if (_partsFilter === 'pending')  allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'none');
-  if (_partsFilter === 'partial')  allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'partial');
-  if (_partsFilter === 'ordered')  allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'ordered');
+  const f = _partsFilter || 'all';
+  if (f === 'pending')  allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'none');
+  if (f === 'partial')  allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'partial');
+  if (f === 'ordered')  allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'ordered');
+  if (f === 'received') allJobs = allJobs.filter(j => getJobPartsStatus(j) === 'received');
+  if (f === 'bo')       allJobs = allJobs.filter(j => (j.parts||[]).some(p => p.status === 'backorder'));
 
   if (!allJobs.length) {
     listEl.innerHTML = `<div style="padding:48px;text-align:center;color:var(--text3)">
@@ -3603,53 +3696,79 @@ function renderPartsPanel() {
 }
 
 function getJobPartsStatus(j) {
-  // Job-level parts ordered flag takes priority
   if (j.partsAllOrdered) return 'ordered';
   const parts = j.parts || [];
   if (!parts.length) return 'none';
-  const ordered  = parts.filter(p => ['ordered','received'].includes(p.status)).length;
-  const total    = parts.length;
-  if (ordered === 0)     return 'none';
-  if (ordered < total)   return 'partial';
+  const total      = parts.length;
+  const received   = parts.filter(p => p.status === 'received').length;
+  const ordered    = parts.filter(p => ['ordered','received'].includes(p.status)).length;
+  if (received === total) return 'received';
+  if (ordered === 0)      return 'none';
+  if (ordered < total)    return 'partial';
   return 'ordered';
 }
 
 function renderPartsCustomerCard(j) {
   const status = getJobPartsStatus(j);
-  const sev    = severityLevels.find(s => s.id === j.severity) || {color:'#64748b', bg:'#f1f5f9', label:'—'};
+  const sev    = (typeof severityLevels !== 'undefined' ? severityLevels : []).find(s => s.id === j.severity) || {color:'#64748b', bg:'#f1f5f9', label:'—'};
   const parts  = j.parts || [];
 
-  const pillClass = status === 'ordered' ? 'ordered' : status === 'partial' ? 'partial' : 'not-ordered';
-  const pillText  = status === 'ordered' ? '✓ Parts Ordered' : status === 'partial' ? '⚡ Partial' : '✗ Not Ordered';
+  const pillMap = {
+    received:  ['ordered',     '✓ All Received'],
+    ordered:   ['ordered',     '⬆ All Ordered'],
+    partial:   ['partial',     '⚡ Partial'],
+    none:      ['not-ordered', '○ Not Ordered'],
+  };
+  const [pillClass, pillText] = pillMap[status] || pillMap.none;
 
   const partsRows = parts.length ? parts.map((p, pi) => {
-    const statusColor = {
-      ordered:   '#16a34a', received: '#0891b2',
-      pending:   '#ea580c', backorder: '#dc2626', returned: '#64748b'
-    }[p.status] || '#64748b';
-    return `<tr>
-      <td style="font-family:monospace;font-size:11px;font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.partNum || '—'}</td>
-      <td style="font-size:12px">${p.description || '—'}</td>
+    const isBO   = p.status === 'backorder';
+    const isRecv = p.status === 'received';
+    const statusColors = {
+      ordered:   '#2563eb', received: '#16a34a',
+      pending:   '#64748b', backorder:'#b45309', returned:'#94a3b8'
+    };
+    const sc = statusColors[p.status] || '#64748b';
+
+    const boEtaField = isBO ? `<input type="date" value="${p.boETA||''}" title="ETA date"
+      style="margin-left:4px;padding:2px 5px;border:1px solid #f59e0b;border-radius:4px;font-size:10px;color:#b45309"
+      onchange="updatePartField('${j.id}',${pi},'boETA',this.value)">` : '';
+
+    const noteField = p.note ? `<div style="font-size:10px;color:var(--text3);font-style:italic;margin-top:2px"><i class="ti ti-note" style="font-size:9px"></i> ${p.note}</div>` : '';
+
+    return `<tr id="prow-${j.id}-${pi}">
+      <td style="font-family:monospace;font-size:11px;font-weight:600;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.partNum||''}">${p.partNum || '—'}</td>
+      <td style="font-size:12px">
+        <div>${p.description || '—'}</div>
+        ${noteField}
+      </td>
       <td style="font-size:11px;color:var(--text3)">${p.supplier || '—'}</td>
-      <td style="font-size:11px;font-weight:700;color:var(--text2)">$${(parseFloat(p.listPrice)||0).toFixed(2)}</td>
-      <td>
-        <select class="parts-status-select" style="color:${statusColor}"
+      <td style="font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap">$${(parseFloat(p.listPrice)||0).toFixed(2)}</td>
+      <td style="white-space:nowrap">
+        <select class="parts-status-select" style="color:${sc}"
           onchange="updatePartStatusGlobal('${j.id}',${pi},this.value)">
           <option value="pending"   ${p.status==='pending'   ?'selected':''}>Pending</option>
           <option value="ordered"   ${p.status==='ordered'   ?'selected':''}>Ordered</option>
-          <option value="received"  ${p.status==='received'  ?'selected':''}>Received</option>
-          <option value="backorder" ${p.status==='backorder' ?'selected':''}>Backorder</option>
+          <option value="received"  ${p.status==='received'  ?'selected':''}>Received ✓</option>
+          <option value="backorder" ${p.status==='backorder' ?'selected':''}>B/O</option>
           <option value="returned"  ${p.status==='returned'  ?'selected':''}>Returned</option>
         </select>
+        ${boEtaField}
+      </td>
+      <td style="white-space:nowrap">
+        ${!isRecv ? `<button class="parts-quick-btn recv" onclick="updatePartStatusGlobal('${j.id}',${pi},'received')" title="Mark received"><i class="ti ti-check"></i> Recv</button>` : '<span class="recv-pill"><i class="ti ti-check"></i> Rcvd</span>'}
+        ${!isBO   ? `<button class="parts-quick-btn bo"   onclick="updatePartStatusGlobal('${j.id}',${pi},'backorder')" title="Mark backordered"><i class="ti ti-clock-exclamation"></i> B/O</button>` : '<span class="bo-pill"><i class="ti ti-clock-exclamation"></i> B/O</span>'}
+        <button class="parts-quick-btn note" onclick="promptPartNote('${j.id}',${pi})" title="Add note"><i class="ti ti-note"></i></button>
       </td>
     </tr>`;
-  }).join('') : `<tr><td colspan="5" style="padding:10px;text-align:center;color:var(--text3);font-size:12px;font-style:italic">
-    No parts added yet — <a href="#" onclick="event.preventDefault();openJobModal('${j.id}')" style="color:var(--blue)">open job to add parts</a>
+  }).join('') : `<tr><td colspan="6" style="padding:10px;text-align:center;color:var(--text3);font-size:12px;font-style:italic">
+    No parts added yet —
+    <a href="#" onclick="event.preventDefault();addManualPartToJob('${j.id}')" style="color:var(--blue)">add a part</a>
+    or <a href="#" onclick="event.preventDefault();openInvScanModal('${j.id}')" style="color:#b45309">scan invoice</a>
   </td></tr>`;
 
   return `<div class="parts-customer-card" id="pcard-${j.id}">
     <div class="parts-customer-header" onclick="togglePartsCard('${j.id}')">
-      <!-- Left: customer info -->
       <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
         <i class="ti ti-chevron-right parts-expand-arrow" id="parrow-${j.id}"></i>
         <div class="parts-customer-info">
@@ -3661,23 +3780,34 @@ function renderPartsCustomerCard(j) {
           </div>
         </div>
       </div>
-      <!-- Center: sev badge -->
       <span class="sev ${j.severity}" style="background:${sev.bg};color:${sev.color};font-size:10px;flex-shrink:0">${sev.label}</span>
-      <!-- Right: parts ordered toggle button -->
+      <!-- Quick action buttons (stop propagation so they don't toggle expand) -->
+      <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
+        <button class="parts-quick-btn recv" onclick="openInvScanModal('${j.id}')" title="Scan invoice for this job" style="background:#fff3cd;color:#b45309">
+          <i class="ti ti-scan"></i> Invoice
+        </button>
+        <button class="parts-quick-btn note" onclick="addManualPartToJob('${j.id}')" title="Add part manually">
+          <i class="ti ti-plus"></i> Part
+        </button>
+      </div>
       <button class="parts-status-pill ${pillClass}" id="ppill-${j.id}"
         onclick="event.stopPropagation();toggleJobPartsOrdered('${j.id}')"
-        title="Click to toggle all parts as ordered">
+        title="Toggle all parts ordered">
         ${pillText}
       </button>
     </div>
-    <!-- Expandable parts table -->
     <div class="parts-customer-body" id="pbody-${j.id}" style="display:none">
       <table class="parts-line-table">
         <thead><tr>
-          <th>Part #</th><th>Description</th><th>Supplier</th><th>List $</th><th>Status</th>
+          <th>Part #</th><th>Description</th><th>Supplier</th><th>List $</th><th>Status</th><th>Actions</th>
         </tr></thead>
         <tbody>${partsRows}</tbody>
       </table>
+      ${parts.length ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="parts-quick-btn recv" onclick="receiveAllJobParts('${j.id}')"><i class="ti ti-checks"></i> Receive all</button>
+        <button class="parts-quick-btn bo"   onclick="boAllJobParts('${j.id}')"><i class="ti ti-clock-exclamation"></i> B/O all</button>
+        <button class="parts-quick-btn note" onclick="openInvScanModal('${j.id}')"><i class="ti ti-scan"></i> Scan invoice</button>
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -3708,18 +3838,92 @@ function toggleJobPartsOrdered(jobId) {
 function updatePartStatusGlobal(jobId, partIdx, newStatus) {
   const j = jobs.find(x => x.id === jobId);
   if (!j || !j.parts || !j.parts[partIdx]) return;
-  j.parts[partIdx].status = newStatus;
-  // If all parts are now ordered/received, auto-set the job flag
-  const allDone = j.parts.every(p => ['ordered','received'].includes(p.status));
+  const p = j.parts[partIdx];
+  p.status = newStatus;
+  if (newStatus === 'received') p.receivedAt = new Date().toISOString();
+  if (newStatus === 'backorder') { p.boFlagged = true; p.boAt = new Date().toISOString(); }
+  const allDone = j.parts.every(p2 => ['ordered','received'].includes(p2.status));
   j.partsAllOrdered = allDone;
   saveData();
-  // Refresh just the pill without full re-render
-  const pill = document.getElementById('ppill-' + jobId);
-  if (pill) {
-    const st = getJobPartsStatus(j);
-    pill.className = 'parts-status-pill ' + (st === 'ordered' ? 'ordered' : st === 'partial' ? 'partial' : 'not-ordered');
-    pill.textContent = st === 'ordered' ? '✓ Parts Ordered' : st === 'partial' ? '⚡ Partial' : '✗ Not Ordered';
-  }
+  // Partial re-render: just the row and pill
+  renderPartsPanel();
+}
+
+function updatePartField(jobId, partIdx, field, value) {
+  const j = jobs.find(x => x.id === jobId);
+  if (!j || !j.parts || !j.parts[partIdx]) return;
+  j.parts[partIdx][field] = value;
+  saveData();
+}
+
+function promptPartNote(jobId, partIdx) {
+  const j = jobs.find(x => x.id === jobId);
+  if (!j || !j.parts || !j.parts[partIdx]) return;
+  const p = j.parts[partIdx];
+  const note = prompt('Note for "' + (p.description || p.partNum || 'part') + '":', p.note || '');
+  if (note === null) return;
+  p.note = note.trim();
+  saveData();
+  renderPartsPanel();
+}
+
+function receiveAllJobParts(jobId) {
+  const j = jobs.find(x => x.id === jobId);
+  if (!j) return;
+  (j.parts || []).forEach(p => {
+    if (p.status !== 'received') { p.status = 'received'; p.receivedAt = new Date().toISOString(); }
+  });
+  j.partsAllOrdered = true;
+  saveData(); renderPartsPanel();
+  showToast('All parts for ' + (j.customer || jobId) + ' marked received ✓');
+}
+
+function boAllJobParts(jobId) {
+  const j = jobs.find(x => x.id === jobId);
+  if (!j) return;
+  (j.parts || []).forEach(p => {
+    if (p.status !== 'received') { p.status = 'backorder'; p.boFlagged = true; }
+  });
+  saveData(); renderPartsPanel();
+  showToast('All undelivered parts for ' + (j.customer || jobId) + ' marked B/O');
+}
+
+function addManualPartToJob(jobId) {
+  const j = jobs.find(x => x.id === jobId);
+  if (!j) return;
+  if (!j.parts) j.parts = [];
+  const partNum = prompt('Part number (or leave blank):') || '';
+  if (partNum === null) return; // cancelled
+  const desc = prompt('Description:') || '';
+  const supplier = prompt('Supplier (e.g. "Chevrolet OEM", "LKQ"):') || '';
+  const priceStr = prompt('List price (numbers only):') || '0';
+  j.parts.push({
+    id: 'PT-' + Date.now(),
+    jobId,
+    partNum: partNum.trim(),
+    description: desc.trim(),
+    supplier: supplier.trim(),
+    listPrice: parseFloat(priceStr) || 0,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  });
+  saveData(); renderPartsPanel();
+  // Auto-expand the card
+  const body = document.getElementById('pbody-' + jobId);
+  const arrow = document.getElementById('parrow-' + jobId);
+  if (body) { body.style.display = 'block'; if (arrow) arrow.classList.add('open'); }
+  showToast('Part added to ' + (j.customer || jobId));
+}
+
+function addManualPartPrompt() {
+  // From the main filter bar "Add Part" button — pick a job first
+  const activeJobs = jobs.filter(j => !j.isArchived && !j.isEstimate);
+  if (!activeJobs.length) { showToast('No active jobs to add parts to'); return; }
+  const choices = activeJobs.map((j,i) => (i+1) + '. ' + (j.customer||j.id) + ' — ' + [j.year,j.make,j.model].filter(Boolean).join(' ')).join('\n');
+  const pick = prompt('Which job?\n\n' + choices + '\n\nEnter number:');
+  if (!pick) return;
+  const idx = parseInt(pick) - 1;
+  if (idx >= 0 && idx < activeJobs.length) addManualPartToJob(activeJobs[idx].id);
 }
 
 function markAllOrdered() {
@@ -3728,9 +3932,304 @@ function markAllOrdered() {
     j.partsAllOrdered = true;
     (j.parts || []).forEach(p => { if (p.status === 'pending') p.status = 'ordered'; });
   });
-  saveData();
-  renderPartsPanel();
+  saveData(); renderPartsPanel();
   showToast('All jobs marked as parts ordered ✓');
+}
+
+// ════════════════════════════════════════════════════════════════
+// INVOICE SCAN MODAL — scan a supplier invoice PDF, match to job
+// ════════════════════════════════════════════════════════════════
+let _invJobId = null;
+let _invParsedParts = [];   // parts extracted from the scanned invoice
+let _invMatches = [];       // [{jobPart, invPart|null, action:'receive'|'bo'|'skip'}]
+
+function openInvScanModal(jobId) {
+  _invJobId = jobId || null;
+  _invParsedParts = [];
+  _invMatches = [];
+
+  // Populate job selector
+  const sel = document.getElementById('inv-job-select');
+  if (sel) {
+    const activeJobs = jobs.filter(j => !j.isArchived && !j.isEstimate);
+    sel.innerHTML = '<option value="">-- Select a job --</option>' +
+      activeJobs.map(j => `<option value="${j.id}" ${j.id===jobId?'selected':''}>${j.id} · ${j.customer||'?'} · ${[j.year,j.make,j.model].filter(Boolean).join(' ')||'No vehicle'}</option>`).join('');
+  }
+
+  // Reset UI
+  const dz = document.getElementById('inv-drop-zone');
+  if (dz) dz.innerHTML = `<i class="ti ti-file-invoice" style="font-size:28px;color:#f59e0b;display:block;margin-bottom:6px"></i>
+    <div style="font-size:13px;font-weight:700;color:var(--text)">Drop supplier invoice PDF here</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:3px">OEM dealers · LKQ · Keystone · NTP · Click to browse</div>`;
+  const statsBar = document.getElementById('inv-stats-bar');
+  if (statsBar) statsBar.style.display = 'none';
+  const body = document.getElementById('inv-result-body');
+  if (body) body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3)">
+    <i class="ti ti-file-scan" style="font-size:40px;display:block;margin-bottom:10px;opacity:.4"></i>
+    <div style="font-size:13px;font-weight:600">Select a job then scan an invoice PDF</div>
+    <div style="font-size:11px;margin-top:4px">Parts from the job will be matched against the invoice automatically</div>
+  </div>`;
+  const saveStatus = document.getElementById('inv-save-status');
+  if (saveStatus) saveStatus.textContent = '';
+  const fi = document.getElementById('inv-pdf-input');
+  if (fi) fi.value = '';
+
+  invJobChanged(); // update badge
+  document.getElementById('inv-scan-modal').classList.add('open');
+}
+
+function closeInvScanModal(e) {
+  if (e && e.target !== document.getElementById('inv-scan-modal')) return;
+  document.getElementById('inv-scan-modal').classList.remove('open');
+}
+
+function invJobChanged() {
+  const sel = document.getElementById('inv-job-select');
+  _invJobId = sel ? sel.value : _invJobId;
+  const badge = document.getElementById('inv-job-badge');
+  if (!badge) return;
+  if (!_invJobId) { badge.textContent = ''; return; }
+  const j = jobs.find(x => x.id === _invJobId);
+  if (!j) { badge.textContent = ''; return; }
+  const partCount = (j.parts || []).length;
+  badge.textContent = partCount + ' parts on file · ' + (j.insurance || 'No insurance');
+  // If we already have parsed invoice parts, re-run matching
+  if (_invParsedParts.length) runInvMatching();
+}
+
+function invDzOver(e)  { e.preventDefault(); document.getElementById('inv-drop-zone').classList.add('drag'); }
+function invDzLeave()  { document.getElementById('inv-drop-zone').classList.remove('drag'); }
+function invDzDrop(e)  {
+  e.preventDefault(); invDzLeave();
+  const f = e.dataTransfer.files[0];
+  if (f?.type === 'application/pdf') invParsePDF(f);
+  else showToast('Please drop a PDF file');
+}
+function invHandlePDF(e) { if (e.target.files[0]) invParsePDF(e.target.files[0]); }
+
+async function invParsePDF(file) {
+  const dz = document.getElementById('inv-drop-zone');
+  dz.innerHTML = '<i class="ti ti-loader" style="font-size:28px;color:#f59e0b;display:block;animation:spin 1s linear infinite;margin-bottom:6px"></i><div style="font-size:12px;font-weight:600">Reading invoice...</div>';
+
+  try {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+    const ab  = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const tc   = await page.getTextContent();
+      text += tc.items.map(x => x.str).join(' ') + '\n';
+    }
+    _invParsedParts = extractInvoiceParts(text);
+
+    dz.innerHTML = `<i class="ti ti-check-circle" style="font-size:28px;color:#16a34a;display:block;margin-bottom:6px"></i>
+      <div style="font-size:13px;font-weight:700;color:#15803d">${file.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${_invParsedParts.length} parts extracted · click to swap file</div>`;
+
+    runInvMatching();
+  } catch(err) {
+    dz.innerHTML = `<i class="ti ti-alert-circle" style="font-size:28px;color:#dc2626;display:block;margin-bottom:6px"></i>
+      <div style="font-size:12px;font-weight:600;color:#dc2626">Could not read PDF</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${err.message} · try a different file</div>`;
+  }
+}
+
+function runInvMatching() {
+  if (!_invJobId) { showToast('Please select a job first'); return; }
+  const j = jobs.find(x => x.id === _invJobId);
+  if (!j) return;
+  const jobParts = j.parts || [];
+
+  // Build match list
+  _invMatches = jobParts.map((jp, jpIdx) => {
+    // Exact part number match
+    const exactMatch = jp.partNum
+      ? _invParsedParts.find(ip => ip.partNum.replace(/[\-\*\s]/g,'').toUpperCase() === jp.partNum.replace(/[\-\*\s]/g,'').toUpperCase())
+      : null;
+    // Fuzzy description match
+    const fuzzy = !exactMatch && jp.description ? (() => {
+      const jw = normalizeDesc(jp.description);
+      let best = null, bestScore = 0;
+      _invParsedParts.forEach(ip => {
+        const iw = normalizeDesc(ip.description);
+        const sc = wordOverlapScore(jw, iw);
+        if (sc > bestScore && sc >= 0.45) { best = ip; bestScore = sc; }
+      });
+      return best ? { inv: best, score: bestScore } : null;
+    })() : null;
+
+    const matched = exactMatch || fuzzy?.inv || null;
+    return {
+      jpIdx,
+      jp,
+      inv: matched,
+      score: exactMatch ? 1 : (fuzzy?.score || 0),
+      isExact: !!exactMatch,
+      // default action: if matched on invoice → receive, else keep current
+      action: matched ? 'receive' : (jp.status === 'backorder' ? 'bo' : 'skip'),
+    };
+  });
+
+  // Parts on invoice that don't match any job part (new parts to add)
+  const matchedInvNums = new Set(_invMatches.filter(m=>m.inv).map(m=>m.inv.partNum));
+  const unmatchedInv = _invParsedParts.filter(ip => !matchedInvNums.has(ip.partNum));
+
+  renderInvResults(j, unmatchedInv);
+}
+
+function renderInvResults(j, unmatchedInv) {
+  const matched  = _invMatches.filter(m => m.inv).length;
+  const unmatched = _invMatches.filter(m => !m.inv).length;
+
+  // Stats bar
+  const sb = document.getElementById('inv-stats-bar');
+  if (sb) {
+    sb.style.display = 'flex';
+    document.getElementById('inv-stat-found').textContent    = _invParsedParts.length + ' parts on invoice';
+    document.getElementById('inv-stat-matched').textContent  = '✓ ' + matched + ' matched';
+    document.getElementById('inv-stat-unmatched').textContent = unmatched + ' not on invoice';
+  }
+
+  const body = document.getElementById('inv-result-body');
+  if (!body) return;
+
+  const existingRows = _invMatches.map((m, mi) => {
+    const statusLabel = {pending:'Pending', ordered:'Ordered', received:'Received', backorder:'B/O', returned:'Returned'}[m.jp.status] || m.jp.status;
+    const matchBadge  = m.inv
+      ? (m.isExact
+          ? `<span style="color:#16a34a;font-weight:700;font-size:10px">✓ EXACT</span>`
+          : `<span style="color:#a16207;font-weight:700;font-size:10px">~ ${Math.round(m.score*100)}%</span>`)
+      : `<span style="color:#94a3b8;font-size:10px">Not on invoice</span>`;
+
+    const invInfo = m.inv
+      ? `<span style="font-size:11px;font-family:monospace">${m.inv.partNum}</span>
+         <span style="font-size:10px;color:var(--text3)">${m.inv.description ? ' — ' + m.inv.description.slice(0,35) : ''}</span>
+         <span style="font-size:11px;font-weight:700;color:#16a34a"> $${m.inv.listPrice?.toFixed(2)||'—'}</span>`
+      : `<span style="font-size:11px;color:var(--text3);font-style:italic">No match</span>`;
+
+    const rowBg = m.action === 'receive' ? '#f0fdf4' : m.action === 'bo' ? '#fff7ed' : '#fff';
+
+    return `<div class="inv-result-row" id="inv-row-${mi}" style="background:${rowBg}">
+      <div style="flex:2;min-width:0">
+        <div style="font-size:12px;font-weight:700">${m.jp.description || '—'}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">
+          <span style="font-family:monospace">${m.jp.partNum||'No part#'}</span>
+          · <span style="color:var(--text2)">${statusLabel}</span>
+          · ${m.jp.supplier || 'No supplier'}
+        </div>
+      </div>
+      <div style="flex:2;min-width:0">${matchBadge}<br>${invInfo}</div>
+      <div style="flex:1;display:flex;gap:5px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+        <button class="parts-quick-btn recv ${m.action==='receive'?'':''}${m.action!=='receive'?'':''}${''}"
+          style="${m.action==='receive'?'outline:2px solid #16a34a;':''}"
+          onclick="setInvAction(${mi},'receive')"><i class="ti ti-check"></i> Received</button>
+        <button class="parts-quick-btn bo"
+          style="${m.action==='bo'?'outline:2px solid #b45309;':''}"
+          onclick="setInvAction(${mi},'bo')"><i class="ti ti-clock-exclamation"></i> B/O</button>
+        <button class="parts-quick-btn note"
+          style="${m.action==='skip'?'outline:2px solid var(--gray2);':''}"
+          onclick="setInvAction(${mi},'skip')">Skip</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const newPartsSection = unmatchedInv.length ? `
+    <div style="margin-top:14px;padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid var(--gray2)">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">
+        <i class="ti ti-plus-circle" style="color:var(--blue)"></i> ${unmatchedInv.length} invoice parts not in this job's parts list
+      </div>
+      ${unmatchedInv.slice(0,10).map((ip, ii) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--gray2)">
+          <input type="checkbox" id="new-inv-${ii}" style="width:14px;height:14px;cursor:pointer">
+          <label for="new-inv-${ii}" style="flex:1;font-size:11px;cursor:pointer">
+            <strong style="font-family:monospace">${ip.partNum}</strong>
+            ${ip.description ? ' — ' + ip.description.slice(0,50) : ''}
+            <span style="color:#16a34a;font-weight:700"> $${ip.listPrice?.toFixed(2)||'—'}</span>
+          </label>
+          <span style="font-size:10px;color:var(--text3)">Add as received</span>
+        </div>`).join('')}
+      ${unmatchedInv.length > 10 ? `<div style="font-size:10px;color:var(--text3);margin-top:4px">...and ${unmatchedInv.length-10} more</div>` : ''}
+    </div>` : '';
+
+  body.innerHTML = (existingRows ? existingRows : `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">No parts on this job — <a href="#" onclick="event.preventDefault();addManualPartToJob('${_invJobId}')" style="color:var(--blue)">add parts to the job first</a></div>`) + newPartsSection;
+
+  // store reference to unmatched inv parts for saving
+  body._unmatchedInv = unmatchedInv;
+}
+
+function setInvAction(matchIdx, action) {
+  if (!_invMatches[matchIdx]) return;
+  _invMatches[matchIdx].action = action;
+  const row = document.getElementById('inv-row-' + matchIdx);
+  if (row) {
+    row.style.background = action === 'receive' ? '#f0fdf4' : action === 'bo' ? '#fff7ed' : '#fff';
+  }
+}
+
+function invReceiveAll() {
+  _invMatches.forEach((m, i) => { m.action = 'receive'; setInvAction(i, 'receive'); });
+}
+function invBOAll() {
+  _invMatches.forEach((m, i) => { if (m.action !== 'receive') { m.action = 'bo'; setInvAction(i, 'bo'); } });
+}
+
+function invSaveResults() {
+  if (!_invJobId) { showToast('No job selected'); return; }
+  const j = jobs.find(x => x.id === _invJobId);
+  if (!j) return;
+  if (!j.parts) j.parts = [];
+
+  let received = 0, bo = 0;
+  _invMatches.forEach(m => {
+    const p = j.parts[m.jpIdx];
+    if (!p) return;
+    if (m.action === 'receive') {
+      p.status = 'received';
+      p.receivedAt = new Date().toISOString();
+      if (m.inv) { p.invPartNum = m.inv.partNum; p.invPrice = m.inv.listPrice; }
+      received++;
+    } else if (m.action === 'bo') {
+      p.status = 'backorder';
+      p.boFlagged = true;
+      p.boAt = new Date().toISOString();
+      bo++;
+    }
+  });
+
+  // Add checked unmatched invoice parts as new received parts
+  const body = document.getElementById('inv-result-body');
+  const unmatchedInv = body?._unmatchedInv || [];
+  unmatchedInv.forEach((ip, ii) => {
+    const cb = document.getElementById('new-inv-' + ii);
+    if (cb && cb.checked) {
+      j.parts.push({
+        id: 'PT-' + Date.now() + '-' + ii,
+        jobId: j.id,
+        partNum: ip.partNum,
+        description: ip.description || '',
+        listPrice: ip.listPrice || 0,
+        supplier: '',
+        status: 'received',
+        receivedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      });
+      received++;
+    }
+  });
+
+  // Auto-update job parts flag
+  const allDone = j.parts.length > 0 && j.parts.every(p => ['ordered','received'].includes(p.status));
+  j.partsAllOrdered = allDone;
+
+  saveData();
+  const statusEl = document.getElementById('inv-save-status');
+  if (statusEl) statusEl.textContent = received + ' received · ' + bo + ' B/O · saved ✓';
+  showToast(received + ' parts received, ' + bo + ' marked B/O for ' + (j.customer || j.id));
+  setTimeout(() => {
+    closeInvScanModal();
+    renderPartsPanel();
+  }, 1000);
 }
 
 // ============================================================
