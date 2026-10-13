@@ -127,6 +127,12 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
 .cal-max-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:auto}
 .cal-max-badge.open{background:var(--blue-l);color:var(--blue)}
 .cal-max-badge.full{background:var(--red-l);color:var(--red)}
+.cal-est-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;cursor:pointer;display:block;text-align:center;margin-top:2px}
+.cal-est-badge.open{background:var(--est-l);color:var(--est)}
+.cal-est-badge.full{background:var(--red-l);color:var(--red)}
+.cal-est-badge.blocked{background:var(--gray1);color:var(--text3);cursor:default;font-style:italic}
+.cal-slot-add-est{font-size:9px;color:var(--est);border:1px dashed var(--est);border-radius:4px;padding:1px 4px;margin-top:2px;cursor:pointer;text-align:center;opacity:.7}
+.cal-slot-add-est:hover{opacity:1;background:var(--est-l)}
 .cal-slot{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:9px;cursor:grab;line-height:1.3;transition:.1s}
 .cal-slot:active{cursor:grabbing;opacity:.7}
 .cal-slot.green{background:var(--green-l);color:var(--green);border-left:3px solid var(--green)}
@@ -1056,6 +1062,9 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
         </div>
       </div>
 
+      <!-- Date capacity warning -->
+      <div id="est-date-warn" style="display:none;gap:6px;align-items:center;padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;margin-bottom:8px"></div>
+
       <!-- Notes -->
       <div class="form-group">
         <div class="form-label">Notes</div>
@@ -1247,18 +1256,40 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
 
 <!-- Scheduling Rules Modal -->
 <div class="rules-modal" id="rules-modal" onclick="closeRulesModal(event)">
-  <div class="rules-panel" onclick="event.stopPropagation()">
+  <div class="rules-panel" onclick="event.stopPropagation()" style="max-width:520px;width:96vw">
     <div class="rules-panel-header">
       <div style="font-size:15px;font-weight:700">Scheduling Rules</div>
       <button class="btn btn-outline btn-sm" onclick="closeRulesModal()"><i class="ti ti-x"></i></button>
     </div>
     <div style="overflow-y:auto;flex:1;padding:18px">
-      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Set which days customers can drop off vehicles and the maximum per day. Drag jobs to those days on the calendar.</p>
+
+      <!-- Drop-off rules -->
+      <div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Vehicle Drop-off Days</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Which days customers can drop off vehicles and how many per day.</p>
       <div id="rules-modal-list"></div>
       <button class="btn btn-outline btn-sm" onclick="addDayRule()" style="margin-top:6px"><i class="ti ti-plus"></i>Add drop-off day</button>
+
+      <div style="height:1px;background:var(--gray2);margin:20px 0"></div>
+
+      <!-- Estimate rules -->
+      <div style="font-size:11px;font-weight:700;color:var(--est);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Estimate Appointment Days</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Set which days you take estimates and the max per day. Block specific dates when you're unavailable.</p>
+      <div id="est-rules-list"></div>
+      <button class="btn btn-outline btn-sm" onclick="addEstRule()" style="margin-top:6px;border-color:var(--est);color:var(--est)"><i class="ti ti-plus"></i>Add estimate day</button>
+
+      <!-- Blocked dates -->
+      <div style="margin-top:16px">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Blocked dates <span style="font-weight:400;color:var(--text3)">(no estimates on these days)</span></div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="est-blocked-list"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+          <input type="date" id="est-block-date-input" class="form-input" style="width:auto;font-size:12px">
+          <button class="btn btn-outline btn-sm" style="border-color:var(--est);color:var(--est)" onclick="addEstBlockedDate()"><i class="ti ti-calendar-off"></i>Block date</button>
+        </div>
+      </div>
+
       <div style="margin-top:18px;padding:12px;background:var(--gray0);border-radius:8px;font-size:12px;color:var(--text2)">
-        <strong style="display:block;margin-bottom:4px">Drag-to-schedule tip</strong>
-        In the Scheduler view or Split view, drag any pending job card directly onto a calendar day to schedule it. The calendar highlights available drop-off days in blue and blocks full days in red.
+        <strong style="display:block;margin-bottom:4px">Tip</strong>
+        Estimate days show in teal on the calendar. Blocked dates and full days show with a red ✗. The estimate modal will warn you if a date is blocked or at capacity.
       </div>
     </div>
     <div style="padding:12px 18px;border-top:1px solid var(--gray2);display:flex;gap:7px">
@@ -1384,6 +1415,18 @@ let dayRules = [
   {day:'Wednesday', maxCars:2}
 ];
 
+// Estimate scheduling rules: which days, how many per day, and blocked dates
+let estRules = {
+  days: [
+    {day:'Monday', maxEst:3},
+    {day:'Tuesday', maxEst:3},
+    {day:'Wednesday', maxEst:3},
+    {day:'Thursday', maxEst:3},
+    {day:'Friday', maxEst:3}
+  ],
+  blockedDates: [] // array of 'YYYY-MM-DD' strings
+};
+
 // ============================================================
 // NAV
 // ============================================================
@@ -1456,6 +1499,27 @@ function capacityForDate(ds) {
   return {max, used, full: used >= max};
 }
 
+// ── Estimate capacity helpers ────────────────────────────────────────────────
+function estimatesForDate(ds) {
+  return jobs.filter(j => j.isEstimate && j.schedDate === ds && j.status !== 'delivered');
+}
+function isEstDay(date) {
+  const n = DAY_FULL[date.getDay()];
+  return estRules.days.some(r => r.day === n);
+}
+function maxEstForDate(date) {
+  const n = DAY_FULL[date.getDay()];
+  const r = estRules.days.find(r => r.day === n);
+  return r ? r.maxEst : 0;
+}
+function estCapForDate(ds) {
+  if (estRules.blockedDates.includes(ds)) return {blocked: true, max:0, used:0, full:true};
+  const dt = new Date(ds + 'T12:00:00');
+  if (!isEstDay(dt)) return null;
+  const max = maxEstForDate(dt);
+  const used = estimatesForDate(ds).length;
+  return {blocked: false, max, used, full: used >= max};
+}
 
 // ============================================================
 // DASHBOARD CALENDAR
@@ -1626,7 +1690,7 @@ function renderDashboard() {
     tbody.appendChild(tr);
   });
 
-  // Upcoming list: only show today and future scheduled dates
+  // Upcoming list: jobs + estimates, today and future only
   const ul = document.getElementById('upcoming-list');
   ul.innerHTML = '';
   const grouped = {};
@@ -1647,7 +1711,14 @@ function renderDashboard() {
       if (shown > 8) return;
       const div = document.createElement('div');
       div.className = 'upcoming-item';
-      div.innerHTML = `<div class="upcoming-time">${8+i}:00 AM</div><div><div class="upcoming-name">${j.id} · ${j.customer}</div><div class="upcoming-vehicle">${j.year} ${j.make} ${j.model}</div></div>`;
+      const isEst = j.isEstimate;
+      const timeStr = isEst && j.estimateTime ? j.estimateTime : (8 + i) + ':00 AM';
+      div.innerHTML = `
+        <div class="upcoming-time" style="color:${isEst?'var(--est)':'var(--text2)'}">${timeStr}</div>
+        <div style="flex:1">
+          <div class="upcoming-name">${isEst?'&#128197; ':''}${j.id} · ${j.customer}</div>
+          <div class="upcoming-vehicle">${j.year} ${j.make} ${j.model}${isEst?' <span style="color:var(--est);font-weight:600;font-size:9px">EST</span>':''}</div>
+        </div>`;
       div.onclick = () => openJobModal(j.id);
       ul.appendChild(div);
       shown++;
@@ -1821,35 +1892,57 @@ function buildMonthHTML(baseDate, cid) {
   for (let d = 1; d <= daysInMonth; d++) {
     const dt = new Date(year, month, d);
     const ds = dStr(year, month, d);
-    const dayJobs = jobsForDate(ds);
-    const isToday = ds === '2024-05-26';
+    const _now2 = new Date(); const todayDs = dStr(_now2.getFullYear(),_now2.getMonth(),_now2.getDate());
+    const dayJobs = jobsForDate(ds).filter(j => !j.isEstimate);
+    const dayEsts = estimatesForDate(ds);
+    const isToday = ds === todayDs;
     const isDrop = isDropDay(dt);
     const cap = isDrop ? capacityForDate(ds) : null;
+    const estCap = estCapForDate(ds);
     const dropClass = isDrop ? (cap.full ? 'drop-blocked' : 'drop-ok') : '';
     html += `<div class="cal-day ${dropClass}${isToday?' today':''}" data-date="${ds}" ondragover="calDayOver(event,this)" ondragleave="calDayLeave(this)" ondrop="calDayDrop(event,'${ds}')">`;
     if (isToday) html += `<div class="cal-day-num"><div class="cal-day-today-num">${d}</div>`;
     else html += `<div class="cal-day-num">${d}`;
     if (isDrop) html += `<span class="cal-drop-lbl">DROP</span>`;
     if (cap) html += `<span class="cal-max-badge ${cap.full?'full':'open'}">${cap.used}/${cap.max}</span>`;
+    // Estimate capacity badge
+    if (estCap) {
+      if (estCap.blocked) {
+        html += `<span class="cal-est-badge blocked" title="Estimates blocked">✗ EST</span>`;
+      } else {
+        html += `<span class="cal-est-badge ${estCap.full?'full':'open'}" onclick="openEstimateModal();document.getElementById('est-date').value='${ds}';event.stopPropagation()" title="Estimates: ${estCap.used}/${estCap.max}">EST ${estCap.used}/${estCap.max}</span>`;
+      }
+    }
     html += `</div>`;
+    // Render jobs first, then estimates
     dayJobs.forEach(j => {
-      const slotEst = j.isEstimate;
-      html += `<div class="cal-slot ${j.severity}" draggable="${!slotEst}"
-        ondragstart="${!slotEst?`startCalDrag(event,'${j.id}')`:'null'}"
-        onclick="openJobModal('${j.id}');event.stopPropagation()"
-        title="${slotEst?'Estimate — private to your shop':''}">
-        <div class="cal-slot-name">${slotEst?'&#128197; ':''}${j.id}</div>
+      html += `<div class="cal-slot ${j.severity}" draggable="true"
+        ondragstart="startCalDrag(event,'${j.id}')"
+        onclick="openJobModal('${j.id}');event.stopPropagation()">
+        <div class="cal-slot-name">${j.id}</div>
         <div>${lastName(j.customer)}</div></div>`;
     });
+    dayEsts.forEach(j => {
+      html += `<div class="cal-slot estimate" draggable="false"
+        onclick="openJobModal('${j.id}');event.stopPropagation()"
+        title="Estimate — tap to open">
+        <div class="cal-slot-name">&#128197; ${j.id}</div>
+        <div>${lastName(j.customer)}</div></div>`;
+    });
+    // "Add estimate" quick button on estimate days
+    if (estCap && !estCap.blocked && !estCap.full) {
+      html += `<div class="cal-slot-add-est" onclick="openEstimateModal();setTimeout(()=>{document.getElementById('est-date').value='${ds}';},50);event.stopPropagation()" title="Schedule estimate">+ Estimate</div>`;
+    }
     html += `</div>`;
   }
   html += `</div>`;
-  html += `<div style="display:flex;gap:12px;margin-top:8px;font-size:10px">
+  html += `<div style="display:flex;gap:12px;margin-top:8px;font-size:10px;flex-wrap:wrap">
     <span><span class="sev green" style="font-size:9px">Green</span> PDR</span>
     <span><span class="sev yellow" style="font-size:9px">Yellow</span> Hood Repl</span>
     <span><span class="sev orange" style="font-size:9px">Orange</span> Roof Refinish</span>
     <span><span class="sev red" style="font-size:9px">Red</span> Hood+Roof Repl</span>
-    <span style="color:var(--blue);font-weight:600">DROP = drop-off day</span>
+    <span style="color:var(--blue);font-weight:600">DROP = vehicle drop-off day</span>
+    <span style="color:var(--est);font-weight:600">EST = estimate appointments</span>
   </div>`;
   return html;
 }
@@ -1880,9 +1973,11 @@ function buildWeekHTML(baseDate, cid) {
     const dt = new Date(start); dt.setDate(start.getDate() + i);
     const ds = dStr(dt.getFullYear(), dt.getMonth(), dt.getDate());
     const dayJobs = jobsForDate(ds);
-    const isToday = ds === '2024-05-26';
+    const _n3 = new Date(); const todayDs3 = dStr(_n3.getFullYear(),_n3.getMonth(),_n3.getDate());
+    const isToday = ds === todayDs3;
     const isDrop = isDropDay(dt);
     const cap = isDrop ? capacityForDate(ds) : null;
+    const estCap2 = estCapForDate(ds);
     const dropClass = isDrop ? (cap.full ? 'drop-blocked' : 'drop-ok') : '';
     html += `<div class="cal-day ${dropClass}${isToday?' today':''}" style="min-height:100px" data-date="${ds}" ondragover="calDayOver(event,this)" ondragleave="calDayLeave(this)" ondrop="calDayDrop(event,'${ds}')">`;
     html += `<div class="cal-day-num">`;
@@ -1890,16 +1985,27 @@ function buildWeekHTML(baseDate, cid) {
     else html += `${DAY_NAMES[dt.getDay()]} ${dt.getDate()}`;
     if (isDrop) html += `<span class="cal-drop-lbl">DROP</span>`;
     if (cap) html += `<span class="cal-max-badge ${cap.full?'full':'open'}">${cap.used}/${cap.max}</span>`;
+    if (estCap2) {
+      if (estCap2.blocked) html += `<span class="cal-est-badge blocked">✗ EST</span>`;
+      else html += `<span class="cal-est-badge ${estCap2.full?'full':'open'}" onclick="openEstimateModal();document.getElementById('est-date').value='${ds}';event.stopPropagation()">EST ${estCap2.used}/${estCap2.max}</span>`;
+    }
     html += `</div>`;
-    dayJobs.forEach(j => {
-      const wEst = j.isEstimate;
-      html += `<div class="cal-slot ${j.severity}" draggable="${!wEst}"
-        ondragstart="${!wEst?`startCalDrag(event,'${j.id}')`:'null'}"
-        onclick="openJobModal('${j.id}');event.stopPropagation()"
-        title="${wEst?'Estimate — private to your shop':''}">
-        <div class="cal-slot-name">${wEst?'&#128197; ':''}${j.id}</div>
+    jobsForDate(ds).filter(j => !j.isEstimate).forEach(j => {
+      html += `<div class="cal-slot ${j.severity}" draggable="true"
+        ondragstart="startCalDrag(event,'${j.id}')"
+        onclick="openJobModal('${j.id}');event.stopPropagation()">
+        <div class="cal-slot-name">${j.id}</div>
         <div>${lastName(j.customer)}</div></div>`;
     });
+    estimatesForDate(ds).forEach(j => {
+      html += `<div class="cal-slot estimate" draggable="false"
+        onclick="openJobModal('${j.id}');event.stopPropagation()">
+        <div class="cal-slot-name">&#128197; ${j.id}</div>
+        <div>${lastName(j.customer)}</div></div>`;
+    });
+    if (estCap2 && !estCap2.blocked && !estCap2.full) {
+      html += `<div class="cal-slot-add-est" onclick="openEstimateModal();setTimeout(()=>{document.getElementById('est-date').value='${ds}';},50);event.stopPropagation()">+ Estimate</div>`;
+    }
     html += `</div>`;
   }
   html += `</div>`;
@@ -3002,16 +3108,25 @@ function openNewJob() {
 // SCHEDULING RULES MODAL
 // ============================================================
 let rulesModalTemp = [];
+let estRulesTemp = { days: [], blockedDates: [] };
 
 function openRulesModal() {
   rulesModalTemp = dayRules.map(r => ({...r}));
+  estRulesTemp = {
+    days: estRules.days.map(r => ({...r})),
+    blockedDates: [...estRules.blockedDates]
+  };
   renderRulesModalList();
+  renderEstRulesList();
+  renderEstBlockedList();
   document.getElementById('rules-modal').classList.add('open');
 }
 function closeRulesModal(e) {
   if (e && e.target !== document.getElementById('rules-modal')) return;
   document.getElementById('rules-modal').classList.remove('open');
 }
+
+// ── Drop-off rules ───────────────────────────────────────────
 function renderRulesModalList() {
   const list = document.getElementById('rules-modal-list');
   list.innerHTML = rulesModalTemp.map((r, i) => `
@@ -3031,13 +3146,69 @@ function renderRulesModalList() {
 }
 function addDayRule() { rulesModalTemp.push({day:'Friday', maxCars:2}); renderRulesModalList(); }
 function removeRuleTemp(i) { rulesModalTemp.splice(i, 1); renderRulesModalList(); }
+
+// ── Estimate rules ───────────────────────────────────────────
+function renderEstRulesList() {
+  const list = document.getElementById('est-rules-list');
+  if (!list) return;
+  list.innerHTML = estRulesTemp.days.map((r, i) => `
+    <div class="day-rule-card" style="border-color:var(--est-l)">
+      <div class="form-group">
+        <div class="form-label" style="color:var(--est)">Estimate day</div>
+        <select class="form-input" onchange="estRulesTemp.days[${i}].day=this.value" style="font-size:12px">
+          ${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(d=>`<option${r.day===d?' selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label" style="color:var(--est)">Max estimates</div>
+        <input class="num-input" type="number" min="1" max="20" value="${r.maxEst}" oninput="estRulesTemp.days[${i}].maxEst=parseInt(this.value)||1" style="border-color:var(--est-l)">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="removeEstRuleTemp(${i})" title="Remove"><i class="ti ti-trash" style="color:var(--red)"></i></button>
+    </div>`).join('');
+}
+function addEstRule() { estRulesTemp.days.push({day:'Thursday', maxEst:3}); renderEstRulesList(); }
+function removeEstRuleTemp(i) { estRulesTemp.days.splice(i, 1); renderEstRulesList(); }
+
+function renderEstBlockedList() {
+  const el = document.getElementById('est-blocked-list');
+  if (!el) return;
+  if (!estRulesTemp.blockedDates.length) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--text3)">None</span>';
+    return;
+  }
+  el.innerHTML = estRulesTemp.blockedDates.map((d, i) => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--red-l);color:var(--red);border:1px solid var(--red);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600">
+      <i class="ti ti-calendar-off" style="font-size:10px"></i>${formatDate(d)}
+      <button onclick="removeEstBlockedDate(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);padding:0;font-size:12px;line-height:1;margin-left:2px">×</button>
+    </span>`).join('');
+}
+function addEstBlockedDate() {
+  const inp = document.getElementById('est-block-date-input');
+  const d = inp ? inp.value : '';
+  if (!d) { showToast('Pick a date to block'); return; }
+  if (estRulesTemp.blockedDates.includes(d)) { showToast('Already blocked'); return; }
+  estRulesTemp.blockedDates.push(d);
+  estRulesTemp.blockedDates.sort();
+  inp.value = '';
+  renderEstBlockedList();
+}
+function removeEstBlockedDate(i) {
+  estRulesTemp.blockedDates.splice(i, 1);
+  renderEstBlockedList();
+}
+
 function saveRules() {
   dayRules = rulesModalTemp.map(r => ({...r}));
+  estRules = {
+    days: estRulesTemp.days.map(r => ({...r})),
+    blockedDates: [...estRulesTemp.blockedDates]
+  };
   updateSidebarRules();
   saveData();
   document.getElementById('rules-modal').classList.remove('open');
   showToast('Scheduling rules updated');
   if (activePanel === 'jobs-split') renderCurrentJobsView();
+  if (activePanel === 'calendar') renderCalendar();
   renderSettingsPage();
 }
 function updateSidebarRules() {
@@ -3415,6 +3586,41 @@ function openEstimateModal(prefill) {
   }
 
   modal.classList.add('open');
+
+  // Wire up date-change warning for estimate capacity
+  const warnEl = document.getElementById('est-date-warn');
+  const dateWatcher = document.getElementById('est-date');
+  if (dateWatcher && warnEl) {
+    dateWatcher.oninput = function() { checkEstDateCapacity(this.value); };
+    checkEstDateCapacity(dateWatcher.value);
+  }
+}
+
+function checkEstDateCapacity(ds) {
+  const warnEl = document.getElementById('est-date-warn');
+  if (!warnEl || !ds) { if (warnEl) warnEl.style.display='none'; return; }
+  const cap = estCapForDate(ds);
+  if (!cap) {
+    warnEl.style.display='flex';
+    warnEl.style.background='var(--red-l)';
+    warnEl.style.color='var(--red)';
+    warnEl.innerHTML='<i class="ti ti-calendar-off"></i> Not an estimate day — check your Scheduling Rules';
+  } else if (cap.blocked) {
+    warnEl.style.display='flex';
+    warnEl.style.background='var(--red-l)';
+    warnEl.style.color='var(--red)';
+    warnEl.innerHTML='<i class="ti ti-ban"></i> This date is blocked for estimates';
+  } else if (cap.full) {
+    warnEl.style.display='flex';
+    warnEl.style.background='var(--yellow-l)';
+    warnEl.style.color='var(--yellow)';
+    warnEl.innerHTML=`<i class="ti ti-alert-triangle"></i> Full — ${cap.used}/${cap.max} estimates already on this day`;
+  } else {
+    warnEl.style.display='flex';
+    warnEl.style.background='var(--green-l)';
+    warnEl.style.color='var(--green)';
+    warnEl.innerHTML=`<i class="ti ti-circle-check"></i> Available — ${cap.used}/${cap.max} estimates booked`;
+  }
 }
 
 function closeEstimateModal(e) {
@@ -4252,6 +4458,7 @@ function saveData() {
     const payload = {
       jobs: jobs,
       dayRules: dayRules,
+      estRules: typeof estRules !== 'undefined' ? estRules : { days: [], blockedDates: [] },
       jobCounter: jobCounter,
       shopProfile: typeof shopProfile !== 'undefined' ? shopProfile : {},
       boardCols: typeof boardCols !== 'undefined' ? boardCols : [],
@@ -4296,6 +4503,13 @@ function loadData() {
       dayRules    = payload.dayRules    || dayRules;
       jobCounter  = payload.jobCounter  || payload.jobs.length;
 
+      // Restore estimate rules if saved
+      if (payload.estRules && typeof estRules !== 'undefined') {
+        estRules = {
+          days: payload.estRules.days || estRules.days,
+          blockedDates: payload.estRules.blockedDates || []
+        };
+      }
       // Restore board columns if saved
       if (payload.boardCols && payload.boardCols.length) {
         boardCols = payload.boardCols;
