@@ -1788,14 +1788,18 @@ function renderSplitView(container) {
   container.innerHTML = `<div class="split-view"><div class="jobs-pane" id="split-jobs-pane"></div><div class="cal-pane" id="split-cal-pane"></div></div>`;
   const jobsPane = document.getElementById('split-jobs-pane');
   const calPane = document.getElementById('split-cal-pane');
-  // Jobs table
-  const list = filterJobs();
+  // Jobs table — only show pending (unscheduled) jobs in the drag-to-schedule pane
+  const filterVal = document.getElementById('jobs-filter').value;
+  const list = filterVal
+    ? filterJobs()
+    : jobs.filter(j => !j.isArchived && !j.isEstimate && j.status === 'pending');
+  const pendingCount = jobs.filter(j => !j.isArchived && !j.isEstimate && j.status === 'pending').length;
   const wrap = document.createElement('div');
   wrap.className = 'table-wrap';
-  wrap.innerHTML = `<div class="table-header"><span class="table-header-title" style="font-size:12px">Drag rows to calendar to schedule &nbsp;<i class="ti ti-arrow-right" style="font-size:11px"></i></span></div><table><thead><tr><th></th><th>Job #</th><th>Customer</th><th>Vehicle</th><th>Severity</th><th>Status</th><th>Scheduled</th></tr></thead><tbody id="split-tbody"></tbody></table>`;
+  wrap.innerHTML = `<div class="table-header"><span class="table-header-title" style="font-size:12px">Drag rows to calendar to schedule &nbsp;<i class="ti ti-arrow-right" style="font-size:11px"></i></span>${filterVal ? '' : `<span style="font-size:11px;color:var(--text3)">${pendingCount} pending</span>`}</div><table><thead><tr><th></th><th>Job #</th><th>Customer</th><th>Vehicle</th><th>Severity</th><th>Status</th><th>Scheduled</th></tr></thead><tbody id="split-tbody"></tbody></table>`;
   jobsPane.appendChild(wrap);
   const tbody = wrap.querySelector('#split-tbody');
-  if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:18px;color:var(--text3)">No jobs</td></tr>'; }
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--text3)"><i class="ti ti-circle-check" style="font-size:24px;display:block;margin-bottom:6px;color:var(--green)"></i>${filterVal ? 'No matching jobs' : 'All jobs scheduled!'}</td></tr>`; }
   list.forEach(j => {
     const tr = document.createElement('tr');
     tr.className = 'job-row';
