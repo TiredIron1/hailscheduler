@@ -3767,7 +3767,18 @@ function buildJobFromImportForm() {
     schedDate: '',
     boardCol:  'waiting',
     estimateParts: window._lastEstimateParts || [],
-    partsMatched:  false
+    partsMatched:  false,
+    parts: (window._lastEstimateParts || [])
+      .filter(p => p.type === 'replace' || p.type === 'ri')
+      .map(p => ({
+        partNum:     p.partNum || '',
+        description: p.description || '',
+        listPrice:   p.listPrice || 0,
+        supplier:    '',
+        status:      'pending',
+        notes:       '',
+        operation:   p.operation || ''
+      }))
   };
 }
 
