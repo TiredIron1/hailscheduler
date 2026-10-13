@@ -1602,16 +1602,23 @@ function dashCalDayDrop(e, ds) {
 // DASHBOARD
 // ============================================================
 function renderDashboard() {
+  // todayStr for date comparisons (YYYY-MM-DD)
+  const _now = new Date();
+  const todayStr = _now.getFullYear() + '-' + String(_now.getMonth()+1).padStart(2,'0') + '-' + String(_now.getDate()).padStart(2,'0');
+
   document.getElementById('stat-total').textContent = jobs.length;
   document.getElementById('stat-total-sub').textContent = jobs.length + ' imported';
+  // Only count pending/scheduled/repair jobs that are not past their drop-off date
   document.getElementById('stat-pending').textContent = jobs.filter(j => j.status === 'pending').length;
-  document.getElementById('stat-scheduled').textContent = jobs.filter(j => j.status === 'scheduled').length;
+  document.getElementById('stat-scheduled').textContent = jobs.filter(j => j.status === 'scheduled' && (!j.schedDate || j.schedDate >= todayStr)).length;
   document.getElementById('stat-repair').textContent = jobs.filter(j => j.status === 'repair').length;
   document.getElementById('stat-highsev').textContent = jobs.filter(j => j.severity === 'red' || j.severity === 'orange').length;
 
+  // Dashboard table: show 6 most-recently-added active jobs (non-delivered)
   const tbody = document.getElementById('dashboard-jobs');
   tbody.innerHTML = '';
-  jobs.slice(0, 6).forEach(j => {
+  const activeJobs = jobs.filter(j => j.status !== 'delivered').slice(0, 6);
+  activeJobs.forEach(j => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td style="font-weight:600">${j.id}</td><td>${j.customer}</td><td>${j.year} ${j.make} ${j.model}</td><td><span class="sev ${j.severity}">${j.severity[0].toUpperCase()+j.severity.slice(1)}</span></td><td><span class="status ${j.status}">${statusLabel(j.status)}</span></td><td style="color:var(--blue);font-size:12px">${j.schedDate ? formatDate(j.schedDate) : '—'}</td>`;
     tr.onclick = () => openJobModal(j.id);
@@ -1619,19 +1626,22 @@ function renderDashboard() {
     tbody.appendChild(tr);
   });
 
+  // Upcoming list: only show today and future scheduled dates
   const ul = document.getElementById('upcoming-list');
   ul.innerHTML = '';
   const grouped = {};
-  jobs.filter(j => j.schedDate).sort((a,b) => a.schedDate.localeCompare(b.schedDate)).forEach(j => {
-    if (!grouped[j.schedDate]) grouped[j.schedDate] = [];
-    grouped[j.schedDate].push(j);
-  });
+  jobs.filter(j => j.schedDate && j.schedDate >= todayStr && j.status !== 'delivered')
+      .sort((a,b) => a.schedDate.localeCompare(b.schedDate))
+      .forEach(j => {
+        if (!grouped[j.schedDate]) grouped[j.schedDate] = [];
+        grouped[j.schedDate].push(j);
+      });
   let shown = 0;
   Object.entries(grouped).forEach(([date, jbs]) => {
     if (shown > 8) return;
     const dh = document.createElement('div');
     dh.className = 'upcoming-date-hdr';
-    dh.textContent = formatDate(date);
+    dh.textContent = formatDate(date) + (date === todayStr ? ' — Today' : '');
     ul.appendChild(dh);
     jbs.forEach((j, i) => {
       if (shown > 8) return;
@@ -1643,7 +1653,7 @@ function renderDashboard() {
       shown++;
     });
   });
-  if (!ul.innerHTML) ul.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">No scheduled jobs yet</div>';
+  if (!ul.innerHTML) ul.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">No upcoming scheduled jobs</div>';
 
   // Render the dashboard calendar
   renderDashCal();
