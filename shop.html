@@ -579,20 +579,19 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
         </div>
       </div>
 
-      <!-- Main dashboard grid: jobs + calendar | right sidebar -->
+      <!-- Main dashboard grid: upcoming + calendar | right sidebar -->
       <div style="display:grid;grid-template-columns:1fr 270px;gap:14px">
 
-        <!-- Left column: jobs table + calendar -->
+        <!-- Left column: upcoming schedule + calendar -->
         <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
 
-          <!-- Recent jobs table -->
-          <div class="table-wrap">
-            <div class="table-header">
-              <span class="table-header-title">Recent Jobs</span>
-              <button class="btn btn-outline btn-sm" onclick="showPanel('jobs-split')">View all <i class="ti ti-arrow-right"></i></button>
+          <!-- Upcoming Schedule (main focus) -->
+          <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="ti ti-calendar-event" style="color:var(--blue)"></i>Upcoming Schedule</div>
+              <button class="btn btn-outline btn-sm" onclick="showPanel('calendar')">Full calendar <i class="ti ti-arrow-right"></i></button>
             </div>
-            <table><thead><tr><th>Job #</th><th>Customer</th><th>Vehicle</th><th>Severity</th><th>Status</th><th>Scheduled</th></tr></thead>
-            <tbody id="dashboard-jobs"></tbody></table>
+            <div id="upcoming-list"></div>
           </div>
 
           <!-- Dashboard calendar -->
@@ -620,8 +619,18 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
 
         </div>
 
-        <!-- Right sidebar: severity guide + upcoming -->
+        <!-- Right sidebar: recent jobs + severity guide -->
         <div style="display:flex;flex-direction:column;gap:14px">
+
+          <!-- Recent jobs (moved to sidebar) -->
+          <div class="table-wrap" style="margin:0">
+            <div class="table-header">
+              <span class="table-header-title" style="font-size:12px">Recent Jobs</span>
+              <button class="btn btn-outline btn-sm" onclick="showPanel('jobs-split')" style="font-size:10px;padding:2px 7px">All <i class="ti ti-arrow-right"></i></button>
+            </div>
+            <table><thead><tr><th>Job #</th><th>Customer</th><th>Status</th></tr></thead>
+            <tbody id="dashboard-jobs"></tbody></table>
+          </div>
 
           <div style="background:#fff;border:1px solid var(--gray2);border-radius:10px;padding:13px">
             <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px"><i class="ti ti-info-circle" style="color:var(--blue)"></i>Severity Guide</div>
@@ -631,11 +640,6 @@ tr.job-row td:first-child::before{content:'⠿';color:var(--text3);margin-right:
               <div style="display:flex;align-items:center;gap:8px;padding:7px;border-radius:6px;background:var(--orange-l)"><div style="width:10px;height:10px;border-radius:50%;background:var(--orange);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:700;color:var(--orange)">Orange</div><div style="font-size:11px;color:var(--text2)">Moderate PDR + Roof Refinishing</div></div></div>
               <div style="display:flex;align-items:center;gap:8px;padding:7px;border-radius:6px;background:var(--red-l)"><div style="width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0"></div><div><div style="font-size:12px;font-weight:700;color:var(--red)">Red</div><div style="font-size:11px;color:var(--text2)">Heavy PDR + Hood &amp; Roof Replacement</div></div></div>
             </div>
-          </div>
-
-          <div class="upcoming" style="flex:1">
-            <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-calendar-event" style="color:var(--blue)"></i>Upcoming Schedule</div>
-            <div id="upcoming-list"></div>
           </div>
 
         </div>
